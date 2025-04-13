@@ -28,6 +28,19 @@
     return btoa(unescape(encodeURIComponent(str)));
   }
 
+  async function limparPergunta() {
+    try {
+      await fetch(apiPerguntaURL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify("")
+      });
+      console.log("Pergunta apagada com sucesso.");
+    } catch (e) {
+      console.error("Erro ao apagar a pergunta:", e);
+    }
+  }
+
   async function buscarEResponder() {
     try {
       document.getElementById("status").innerText = "Buscando pergunta...";
@@ -70,6 +83,15 @@
           await limparPergunta();
         }, 100);
 
+const resposta = dados.resposta;
+      console.log("Resposta que será enviada:", resposta);
+
+      await fetch(apiRespostaURL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(resposta) // envia corretamente como string
+      });
+
       }, 10000);
 
     } catch (err) {
@@ -79,25 +101,6 @@
   }
 
   buscarEResponder();
-
-async function limparPergunta() {
-    try {
-      await fetch(apiPerguntaURL, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify("")
-      });
-      console.log("Pergunta apagada com sucesso.");
-    } catch (e) {
-      console.error("Erro ao apagar a pergunta:", e);
-    }
-  }
-
-await fetch(apiRespostaURL, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(resposta) // envia corretamente como string
-      });
 
   setTimeout(function () {
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
