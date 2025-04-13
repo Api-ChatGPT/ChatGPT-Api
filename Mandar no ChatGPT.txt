@@ -1,3 +1,4 @@
+
 ==========================
 
 NÚMERO: +1 (800) 242-8478
@@ -12,5 +13,11 @@ S2 = Reposta ChatGPT
 {"S1":"","S2""}
 
 Só mandei Json só!!
+
+==========================
+
+https://api-chatgpt.github.io/ChatGPT-Api/index.html
+
+https://api-chatgpt.github.io/ChatGPT-Api/Index.html
 
 ==========================
