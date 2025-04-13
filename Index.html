@@ -28,19 +28,6 @@
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  async function limparPergunta() {
-    try {
-      await fetch(apiPerguntaURL, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify("")
-      });
-      console.log("Pergunta apagada com sucesso.");
-    } catch (e) {
-      console.error("Erro ao apagar a pergunta:", e);
-    }
-  }
-
   async function buscarEResponder() {
     try {
       document.getElementById("status").innerText = "Buscando pergunta...";
@@ -92,6 +79,19 @@
   }
 
   buscarEResponder();
+
+async function limparPergunta() {
+    try {
+      await fetch(apiPerguntaURL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify("")
+      });
+      console.log("Pergunta apagada com sucesso.");
+    } catch (e) {
+      console.error("Erro ao apagar a pergunta:", e);
+    }
+  }
 
   setTimeout(function () {
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
