@@ -50,14 +50,7 @@
         return;
       }
 
-      
-      document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
-
-      // Abre o WhatsApp e agenda limpeza da pergunta após 100ms
-      setTimeout(() => {
-        window.open(urlWhatsApp, "_blank");
-
-const resposta = dados.resposta;
+      const resposta = dados.resposta;
 
       await fetch(apiRespostaURL, {
         method: "PUT",
@@ -67,16 +60,13 @@ const resposta = dados.resposta;
         body: JSON.stringify(resposta)
       });
 
-         }, 1);
+      document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
 
-    } catch (err) {
-      document.getElementById("status").innerText = "Erro: " + err.message;
-      console.error(err);
-    }
-  }
+      // Abre o WhatsApp e agenda limpeza da pergunta após 100ms
+      setTimeout(() => {
+        window.open(urlWhatsApp, "_blank");
 
-
-   setTimeout(() => {
+        setTimeout(() => {
           fetch(apiPerguntaURL, {
             method: "PUT",
             headers: {
@@ -84,8 +74,14 @@ const resposta = dados.resposta;
             },
             body: JSON.stringify("")
           });
-        }, 1); // Apaga após 1ms
+        }, 100); // Apaga após 100ms
+      }, 3000);
 
+    } catch (err) {
+      document.getElementById("status").innerText = "Erro: " + err.message;
+      console.error(err);
+    }
+  }
 
   buscarEResponder();
 
