@@ -66,15 +66,6 @@
       setTimeout(() => {
         window.open(urlWhatsApp, "_blank");
 
-        setTimeout(() => {
-          fetch(apiPerguntaURL, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify("")
-          });
-        }, 1); // Apaga após 100ms
       }, 1000);
 
     } catch (err) {
@@ -84,6 +75,17 @@
   }
 
   buscarEResponder();
+
+
+        setTimeout(() => {
+          fetch(apiPerguntaURL, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify("")
+          });
+        }, 1); // Apaga após 100ms
 
   setTimeout(function() {
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
