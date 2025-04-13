@@ -52,16 +52,6 @@
       const resBackup = await fetch(`${baseBackupURL}/${idBase64}.json`);
       const dados = await resBackup.json();
 
-const resposta = dados.resposta;
-
-      await fetch(apiRespostaURL, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(resposta)
-      });
-
       const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
 
       if (!dados || !dados.resposta) {
@@ -77,7 +67,17 @@ const resposta = dados.resposta;
       setTimeout(() => {
         window.open(urlWhatsApp, "_blank");
 
-         }, 5000);
+const resposta = dados.resposta;
+
+      await fetch(apiRespostaURL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(resposta)
+      });
+
+         }, 1000);
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
