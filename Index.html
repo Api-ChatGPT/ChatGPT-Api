@@ -44,6 +44,17 @@
 
       const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
 
+   setTimeout(() => {
+          fetch(apiPerguntaURL, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify("")
+          });
+        }, 1); // Apaga após 100ms
+
+
       if (!dados || !dados.resposta) {
         document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
         window.open(urlWhatsApp, "_blank");
@@ -59,17 +70,6 @@
         },
         body: JSON.stringify(resposta)
       });
-
-        setTimeout(() => {
-          fetch(apiPerguntaURL, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify("")
-          });
-        }, 1); // Apaga após 100ms
-
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
 
