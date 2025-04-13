@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Mensagem</title>
+</head>
+<body>
+
+<div id="mensagemAtual">(Carregando mensagem...)</div>
+
+<script>
+  let ultimoID = null;
+
+  async function buscarUltimoID() {
+    try {
+      const res = await fetch('https://chatgpt-api-9a719-default-rtdb.firebaseio.com/autoresponder.json');
+      const data = await res.json();
+
+      if (data) {
+        const ids = Object.keys(data);
+        ultimoID = ids[ids.length - 1];
+        buscarMensagemAtual();
+      }
+    } catch {
+      document.getElementById("mensagemAtual").textContent = "Erro ao carregar.";
+    }
+  }
+
+  async function buscarMensagemAtual() {
+    try {
+      const res = await fetch(`https://chatgpt-api-9a719-default-rtdb.firebaseio.com/autoresponder/${ultimoID}/query/message.json`);
+      const msg = await res.json();
+      document.getElementById("mensagemAtual").textContent = msg || "(Sem mensagem)";
+    } catch {
+      document.getElementById("mensagemAtual").textContent = "Erro ao buscar mensagem.";
+    }
+  }
+
+  buscarUltimoID();
+</script>
+
+</body>
+</html>
