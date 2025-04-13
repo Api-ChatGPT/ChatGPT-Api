@@ -62,18 +62,20 @@
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
 
-      setTimeout(async function() {
+      // Abre o WhatsApp e agenda limpeza da pergunta após 100ms
+      setTimeout(() => {
         window.open(urlWhatsApp, "_blank");
 
-        // Apaga a pergunta do servidor após tudo ter sido executado com sucesso
-        await fetch(apiPerguntaURL, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify("")
-        });
-      }, 1000);
+        setTimeout(() => {
+          fetch(apiPerguntaURL, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify("")
+          });
+        }, 100); // Apaga após 100ms
+      }, 3000);
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
