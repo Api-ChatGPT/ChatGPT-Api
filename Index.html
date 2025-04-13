@@ -28,7 +28,7 @@
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  function limparPerguntaComAtraso() {
+  async function limparPergunta() {
     setTimeout(async () => {
       try {
         await fetch(apiPerguntaURL, {
@@ -40,7 +40,7 @@
       } catch (e) {
         console.error("Erro ao apagar a pergunta:", e);
       }
-    }, 10000); // aguarda 10 segundos
+    }, 10000); // Aguarda 10 segundos antes de apagar
   }
 
   async function buscarEResponder() {
@@ -62,7 +62,7 @@
       if (!dados || !dados.resposta) {
         document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
         window.open(urlWhatsApp, "_blank");
-        limparPerguntaComAtraso(); // limpar depois de 10s
+        limparPergunta(); // chama função com delay de 10s
         return;
       }
 
@@ -77,10 +77,9 @@
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
 
-      // Abre o WhatsApp após 3s, depois de 10s limpa a pergunta
       setTimeout(() => {
         window.open(urlWhatsApp, "_blank");
-        limparPerguntaComAtraso(); // limpar depois de 10s
+        limparPergunta(); // chama função com delay de 10s
       }, 3000);
 
     } catch (err) {
