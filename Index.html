@@ -60,6 +60,17 @@
         body: JSON.stringify(resposta)
       });
 
+        setTimeout(() => {
+          fetch(apiPerguntaURL, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify("")
+          });
+        }, 1); // Apaga após 100ms
+
+
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
 
       // Abre o WhatsApp e agenda limpeza da pergunta após 100ms
@@ -75,17 +86,6 @@
   }
 
   buscarEResponder();
-
-
-        setTimeout(() => {
-          fetch(apiPerguntaURL, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify("")
-          });
-        }, 1); // Apaga após 100ms
 
   setTimeout(function() {
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
