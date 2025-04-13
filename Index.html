@@ -3,11 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <title>Buscar e Responder</title>
+  <style>
+    #webview {
+      width: 100%;
+      height: 600px;
+      border: none;
+      display: none; /* só aparece quando for redirecionar */
+    }
+  </style>
 </head>
 <body>
 
 <h2>Status:</h2>
 <div id="status">Iniciando...</div>
+
+<!-- WebView simulada com iframe -->
+<iframe id="webview"></iframe>
 
 <script>
   const apiPerguntaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json";
@@ -32,10 +43,13 @@
       const resBackup = await fetch(`${baseBackupURL}/${idBase64}.json`);
       const dados = await resBackup.json();
 
+      const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
+      const webview = document.getElementById("webview");
+
       if (!dados || !dados.resposta) {
-        document.getElementById("status").innerText = "Resposta não encontrada. Redirecionando...";
-        const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
-        window.location.href = urlWhatsApp;
+        document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
+        webview.src = urlWhatsApp;
+        webview.style.display = "block";
         return;
       }
 
@@ -49,12 +63,12 @@
         body: JSON.stringify(resposta)
       });
 
-      document.getElementById("status").innerText = "Resposta enviada com sucesso!";
+      document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
 
       setTimeout(function() {
-        const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
-        window.location.href = urlWhatsApp;
-      }, 5000);
+        webview.src = urlWhatsApp;
+        webview.style.display = "block";
+      }, 3000);
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
