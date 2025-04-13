@@ -28,19 +28,17 @@
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  async function limparPergunta() {
-    setTimeout(async () => {
-      try {
-        await fetch(apiPerguntaURL, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify("")
-        });
-        console.log("Pergunta apagada com sucesso após 10 segundos.");
-      } catch (e) {
-        console.error("Erro ao apagar a pergunta:", e);
-      }
-    }, 10000); // Aguarda 10 segundos antes de apagar
+  async function apagarPergunta() {
+    try {
+      await fetch(apiPerguntaURL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify("")
+      });
+      console.log("Pergunta apagada do servidor.");
+    } catch (e) {
+      console.error("Erro ao apagar a pergunta:", e);
+    }
   }
 
   async function buscarEResponder() {
@@ -62,7 +60,11 @@
       if (!dados || !dados.resposta) {
         document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
         window.open(urlWhatsApp, "_blank");
-        limparPergunta(); // chama função com delay de 10s
+
+        setTimeout(() => {
+          apagarPergunta();
+        }, 10000);
+
         return;
       }
 
@@ -79,7 +81,12 @@
 
       setTimeout(() => {
         window.open(urlWhatsApp, "_blank");
-        limparPergunta(); // chama função com delay de 10s
+
+        // Apaga a pergunta após 10 segundos
+        setTimeout(() => {
+          apagarPergunta();
+        }, 10000);
+
       }, 3000);
 
     } catch (err) {
@@ -90,7 +97,7 @@
 
   buscarEResponder();
 
-  setTimeout(function () {
+  setTimeout(() => {
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
   }, 1000);
 </script>
