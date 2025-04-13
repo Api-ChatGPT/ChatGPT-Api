@@ -28,18 +28,20 @@
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  async function limparPergunta() {
-    try {
-      await fetch(apiPerguntaURL, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify("")
-      });
-      console.log("Pergunta apagada com sucesso.");
-    } catch (e) {
-      console.error("Erro ao apagar a pergunta:", e);
-    }
-  };}, 10000);
+  function limparPerguntaComAtraso() {
+    setTimeout(async () => {
+      try {
+        await fetch(apiPerguntaURL, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify("")
+        });
+        console.log("Pergunta apagada com sucesso após 10 segundos.");
+      } catch (e) {
+        console.error("Erro ao apagar a pergunta:", e);
+      }
+    }, 10000); // aguarda 10 segundos
+  }
 
   async function buscarEResponder() {
     try {
@@ -60,7 +62,7 @@
       if (!dados || !dados.resposta) {
         document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
         window.open(urlWhatsApp, "_blank");
-        await limparPergunta();
+        limparPerguntaComAtraso(); // limpar depois de 10s
         return;
       }
 
@@ -70,20 +72,16 @@
       await fetch(apiRespostaURL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(resposta) // envia corretamente como string
+        body: JSON.stringify(resposta)
       });
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
 
-      // Abre o WhatsApp e depois de 100ms apaga a pergunta
-      setTimeout(async () => {
+      // Abre o WhatsApp após 3s, depois de 10s limpa a pergunta
+      setTimeout(() => {
         window.open(urlWhatsApp, "_blank");
-
-        setTimeout(async () => {
-          await limparPergunta();
-        }, 100);
-
-      }, 1000);
+        limparPerguntaComAtraso(); // limpar depois de 10s
+      }, 3000);
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
@@ -93,7 +91,7 @@
 
   buscarEResponder();
 
-  Sem pergunta
+  setTimeout(function () {
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
   }, 1000);
 </script>
