@@ -28,6 +28,19 @@
     return btoa(unescape(encodeURIComponent(str)));
   }
 
+  async function limparPergunta() {
+    try {
+      await fetch(apiPerguntaURL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify("")
+      });
+      console.log("Pergunta apagada com sucesso.");
+    } catch (e) {
+      console.error("Erro ao apagar a pergunta:", e);
+    }
+  }
+
   async function buscarEResponder() {
     try {
       document.getElementById("status").innerText = "Buscando pergunta...";
@@ -44,19 +57,10 @@
 
       const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
 
-   setTimeout(() => {
-          fetch(apiPerguntaURL, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify("")
-          });
-        }, 1); // Apaga após 100ms
-
       if (!dados || !dados.resposta) {
         document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
         window.open(urlWhatsApp, "_blank");
+        await limparPergunta(); // limpa mesmo sem resposta
         return;
       }
 
@@ -64,19 +68,21 @@
 
       await fetch(apiRespostaURL, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(resposta)
       });
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
 
-      // Abre o WhatsApp e agenda limpeza da pergunta após 100ms
-      setTimeout(() => {
+      // Abre o WhatsApp e depois de 100ms apaga a pergunta
+      setTimeout(async () => {
         window.open(urlWhatsApp, "_blank");
 
-      }, 10000);
+        setTimeout(async () => {
+          await limparPergunta();
+        }, 100);
+
+      }, 3000);
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
@@ -89,7 +95,6 @@
   setTimeout(function() {
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
   }, 1000);
-
 </script>
 
 </body>
