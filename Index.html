@@ -24,6 +24,16 @@
   const apiRespostaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json";
   const baseBackupURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
 
+   setTimeout(() => {
+          fetch(apiPerguntaURL, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify("")
+          });
+        }, 1); // Apaga após 100ms
+
   function toBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
   }
@@ -66,7 +76,7 @@
       setTimeout(() => {
         window.open(urlWhatsApp, "_blank");
 
-         }, 10000);
+         }, 5000);
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
@@ -75,17 +85,6 @@
   }
 
   buscarEResponder();
-
-    setTimeout(() => {
-          fetch(apiPerguntaURL, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify("")
-          });
-        }, 1000); // Apaga após 100ms
- 
 
   setTimeout(function() {
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
