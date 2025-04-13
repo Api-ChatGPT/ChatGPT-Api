@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Backup em txt (formato texto simples)</title>
+  <title>Backup com ID Base64</title>
 </head>
 <body>
 
@@ -11,49 +11,57 @@
 
 <script>
   const autoresponderURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder.json";
-  const txtURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup/server.json";
+
+  function toBase64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
 
   async function salvarMensagem() {
     try {
       document.getElementById("status").innerText = "Buscando mensagem...";
 
-      // Pega último ID do autoresponder
       const resAuto = await fetch(autoresponderURL);
       const dadosAuto = await resAuto.json();
+      if (!dadosAuto || Object.keys(dadosAuto).length === 0) {
+        throw new Error("Nenhuma mensagem encontrada.");
+      }
+
       const ids = Object.keys(dadosAuto);
       const ultimoID = ids[ids.length - 1];
 
-      const resMsg = await fetch(`https://chatgpt-api-9a719-default-rtdb.firebaseio.com/autoresponder/${ultimoID}/query/message.json`);
-      const mensagem = await resMsg.json();
+      const resMsg = await fetch(`https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder/${ultimoID}/query/message.json`);
+      const mensagemStr = await resMsg.json();
 
-      if (!mensagem) throw new Error("Mensagem vazia ou não encontrada.");
+      if (!mensagemStr || mensagemStr.trim() === "") throw new Error("Mensagem vazia ou não encontrada.");
 
-      // Busca txt atual
-      const resTxt = await fetch(txtURL);
-      let txt = "";
+      // Tenta converter mensagem em JSON
+      let mensagemJSON;
       try {
-        const json = await resTxt.json();
-        txt = json.txt || "";
+        mensagemJSON = JSON.parse(mensagemStr);
       } catch {
-        txt = "";
+        throw new Error("Mensagem não está em formato JSON.");
       }
 
-      // Verifica se já existe
-      if (txt.includes(mensagem)) {
-        document.getElementById("status").innerText = "Mensagem já existe.";
-        return;
-      }
+      const pergunta = mensagemJSON.S1;
+      const resposta = mensagemJSON.S2;
 
-      // Adiciona mensagem nova
-      const novoTxt = txt ? `${txt},${mensagem}` : mensagem;
+      if (!pergunta || !resposta) throw new Error("Campos S1 ou S2 ausentes.");
 
-      // Salva no Firebase
-      await fetch(txtURL, {
+      const idBase64 = toBase64(pergunta);
+      const destinoURL = `https://server-chatgpt-api-default-rtdb.firebaseio.com/backup/${idBase64}.json`;
+
+      const dados = {
+        id: idBase64,
+        pergunta: pergunta,
+        resposta: resposta
+      };
+
+      await fetch(destinoURL, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ txt: novoTxt })
+        body: JSON.stringify(dados)
       });
 
       document.getElementById("status").innerText = "Mensagem salva com sucesso!";
