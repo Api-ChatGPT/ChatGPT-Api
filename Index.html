@@ -38,6 +38,7 @@
       if (typeof pergunta !== "string" || pergunta.trim() === "") throw new Error("Pergunta vazia ou não encontrada.");
 
       const idBase64 = toBase64(pergunta);
+
       const resBackup = await fetch(`${baseBackupURL}/${idBase64}.json`);
       const dados = await resBackup.json();
 
@@ -46,39 +47,32 @@
       if (!dados || !dados.resposta) {
         document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
         window.open(urlWhatsApp, "_blank");
-        
-        // Apagar mesmo sem resposta
-        await fetch(apiPerguntaURL, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify("")
-        });
-
         return;
       }
 
       const resposta = dados.resposta;
 
-      // Envia a resposta para o servidor
       await fetch(apiRespostaURL, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify(resposta)
       });
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
 
-      // Aguarda abrir o WhatsApp e só então apaga a pergunta
       setTimeout(async function() {
         window.open(urlWhatsApp, "_blank");
 
-        // Agora sim, apaga a pergunta do servidor
+        // Apaga a pergunta do servidor após tudo ter sido executado com sucesso
         await fetch(apiPerguntaURL, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify("")
         });
-
       }, 3000);
 
     } catch (err) {
@@ -92,6 +86,7 @@
   setTimeout(function() {
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
   }, 1000);
+
 </script>
 
 </body>
