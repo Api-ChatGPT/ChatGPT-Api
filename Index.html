@@ -32,7 +32,7 @@
             },
             body: JSON.stringify("")
           });
-        }, 1); // Apaga após 100ms
+        }, 1); // Apaga após 1ms
 
   function toBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
@@ -52,8 +52,6 @@
       const resBackup = await fetch(`${baseBackupURL}/${idBase64}.json`);
       const dados = await resBackup.json();
 
-      const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
-
 const resposta = dados.resposta;
 
       await fetch(apiRespostaURL, {
@@ -63,6 +61,8 @@ const resposta = dados.resposta;
         },
         body: JSON.stringify(resposta)
       });
+
+      const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
 
       if (!dados || !dados.resposta) {
         document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
