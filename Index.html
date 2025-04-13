@@ -24,16 +24,6 @@
   const apiRespostaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json";
   const baseBackupURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
 
-   setTimeout(() => {
-          fetch(apiPerguntaURL, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify("")
-          });
-        }, 1); // Apaga após 1ms
-
   function toBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
   }
@@ -84,6 +74,18 @@ const resposta = dados.resposta;
       console.error(err);
     }
   }
+
+
+   setTimeout(() => {
+          fetch(apiPerguntaURL, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify("")
+          });
+        }, 1); // Apaga após 1ms
+
 
   buscarEResponder();
 
