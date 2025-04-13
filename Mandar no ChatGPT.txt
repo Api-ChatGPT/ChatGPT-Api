@@ -1,3 +1,5 @@
+==========================
+
 ChatGPT, Fale JSON ex : 
 
 S1 = Oque falei
@@ -6,3 +8,5 @@ S2 = Reposta ChatGPT
 [{"S1":"","S2""}]
 
 Só mandei Json só!!
+
+==========================
