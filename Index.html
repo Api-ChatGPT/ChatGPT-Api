@@ -18,40 +18,29 @@
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  async function copiarParaAreaDeTransferencia(texto) {
-    try {
-      await navigator.clipboard.writeText(texto);
-      console.log("Texto copiado: ", texto);
-    } catch (err) {
-      console.error("Erro ao copiar: ", err);
-    }
-  }
-
   async function buscarEResponder() {
     try {
       document.getElementById("status").innerText = "Buscando pergunta...";
 
-      // 1. Buscar pergunta
       const resPergunta = await fetch(apiPerguntaURL);
       const pergunta = await resPergunta.json();
 
       if (!pergunta || pergunta.trim() === "") throw new Error("Pergunta vazia ou não encontrada.");
 
-      // 2. Gerar ID base64
       const idBase64 = toBase64(pergunta);
 
-      // 3. Buscar resposta no backup
       const resBackup = await fetch(`${baseBackupURL}/${idBase64}.json`);
       const dados = await resBackup.json();
 
       if (!dados || !dados.resposta) {
-        await copiarParaAreaDeTransferencia(pergunta);
-        throw new Error("Resposta não encontrada no backup. Pergunta copiada para a área de transferência.");
+        document.getElementById("status").innerText = "Resposta não encontrada. Redirecionando...";
+        const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
+        window.location.href = urlWhatsApp;
+        return;
       }
 
       const resposta = dados.resposta;
 
-      // 4. Enviar resposta para a API
       await fetch(apiRespostaURL, {
         method: "PUT",
         headers: {
@@ -61,6 +50,12 @@
       });
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso!";
+
+      setTimeout(function() {
+        const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
+        window.location.href = urlWhatsApp;
+      }, 5000);
+
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
       console.error(err);
@@ -68,11 +63,6 @@
   }
 
   buscarEResponder();
-
-setTimeout(function() {
-  window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html"; // Coloca aqui a URL de destino
-}, 5000); // 5000 milissegundos = 5 segundos
-
 </script>
 
 </body>
