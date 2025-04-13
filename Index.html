@@ -60,16 +60,17 @@
       if (!dados || !dados.resposta) {
         document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
         window.open(urlWhatsApp, "_blank");
-        await limparPergunta(); // limpa mesmo sem resposta
+        await limparPergunta();
         return;
       }
 
       const resposta = dados.resposta;
+      console.log("Resposta que será enviada:", resposta);
 
       await fetch(apiRespostaURL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(resposta)
+        body: JSON.stringify(resposta) // envia corretamente como string
       });
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
@@ -92,7 +93,7 @@
 
   buscarEResponder();
 
-  setTimeout(function() {
+  setTimeout(function () {
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
   }, 1000);
 </script>
