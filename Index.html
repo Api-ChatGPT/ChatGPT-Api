@@ -54,13 +54,7 @@
 
       const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
 
-      if (!dados || !dados.resposta) {
-        document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
-        window.open(urlWhatsApp, "_blank");
-        return;
-      }
-
-      const resposta = dados.resposta;
+const resposta = dados.resposta;
 
       await fetch(apiRespostaURL, {
         method: "PUT",
@@ -70,6 +64,13 @@
         body: JSON.stringify(resposta)
       });
 
+      if (!dados || !dados.resposta) {
+        document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
+        window.open(urlWhatsApp, "_blank");
+        return;
+      }
+
+      
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
 
       // Abre o WhatsApp e agenda limpeza da pergunta após 100ms
