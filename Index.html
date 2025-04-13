@@ -37,15 +37,6 @@
 
       if (typeof pergunta !== "string" || pergunta.trim() === "") throw new Error("Pergunta vazia ou não encontrada.");
 
-      // Limpa a pergunta no servidor após capturar
-      await fetch(apiPerguntaURL, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify("")
-      });
-
       const idBase64 = toBase64(pergunta);
       const resBackup = await fetch(`${baseBackupURL}/${idBase64}.json`);
       const dados = await resBackup.json();
@@ -55,6 +46,16 @@
       if (!dados || !dados.resposta) {
         document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
         window.open(urlWhatsApp, "_blank");
+
+        // Apaga a pergunta após tudo
+        await fetch(apiPerguntaURL, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify("")
+        });
+
         return;
       }
 
@@ -69,6 +70,15 @@
       });
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
+
+      // Apaga a pergunta após tudo
+      await fetch(apiPerguntaURL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify("")
+      });
 
       setTimeout(function() {
         window.open(urlWhatsApp, "_blank");
