@@ -37,8 +37,16 @@
 
       if (typeof pergunta !== "string" || pergunta.trim() === "") throw new Error("Pergunta vazia ou não encontrada.");
 
-      const idBase64 = toBase64(pergunta);
+      // Limpa a pergunta no servidor após capturar
+      await fetch(apiPerguntaURL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify("")
+      });
 
+      const idBase64 = toBase64(pergunta);
       const resBackup = await fetch(`${baseBackupURL}/${idBase64}.json`);
       const dados = await resBackup.json();
 
