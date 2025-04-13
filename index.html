@@ -1,71 +1,70 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <title>Backup Automático</title>
+  <meta charset="UTF-8">
+  <title>Backup em txt (formato texto simples)</title>
 </head>
 <body>
-  <h2>Status:</h2>
-  <div id="status">Iniciando...</div>
 
-  <script>
-    const apiUrl = "https://api-chatgpt.github.io/ChatGPT-Api/AUTO-RESPONDER.html";
-    const firebaseUrl = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/backup/server/txt.json";
+<h2>Status:</h2>
+<div id="status">Iniciando...</div>
 
-    async function processar() {
+<script>
+  const autoresponderURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/autoresponder.json";
+  const txtURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/backup/server.json";
+
+  async function salvarMensagem() {
+    try {
+      document.getElementById("status").innerText = "Buscando mensagem...";
+
+      // Pega último ID do autoresponder
+      const resAuto = await fetch(autoresponderURL);
+      const dadosAuto = await resAuto.json();
+      const ids = Object.keys(dadosAuto);
+      const ultimoID = ids[ids.length - 1];
+
+      const resMsg = await fetch(`https://chatgpt-api-9a719-default-rtdb.firebaseio.com/autoresponder/${ultimoID}/query/message.json`);
+      const mensagem = await resMsg.json();
+
+      if (!mensagem) throw new Error("Mensagem vazia ou não encontrada.");
+
+      // Busca txt atual
+      const resTxt = await fetch(txtURL);
+      let txt = "";
       try {
-        document.getElementById("status").innerText = "Buscando dados da API...";
-
-        const respostaApi = await fetch(apiUrl);
-        const dados = await respostaApi.json();
-
-        const S1 = dados.S1;
-        const S2 = dados.S2;
-
-        if (!S1 || !S2) {
-          document.getElementById("status").innerText = "Dados inválidos.";
-          return;
-        }
-
-        document.getElementById("status").innerText = "Verificando Firebase...";
-        const respostaFirebase = await fetch(firebaseUrl);
-        let dadosFirebase = await respostaFirebase.json();
-
-        if (!Array.isArray(dadosFirebase)) {
-          dadosFirebase = [];
-        }
-
-        const existe = dadosFirebase.some(item => item.pergunta === S1);
-
-        if (existe) {
-          document.getElementById("status").innerText = "Pergunta já cadastrada.";
-          return;
-        }
-
-        const novoItem = {
-          pergunta: S1,
-          resposta: S2,
-          id: Date.now()
-        };
-
-        dadosFirebase.push(novoItem);
-
-        document.getElementById("status").innerText = "Salvando no Firebase...";
-        await fetch(firebaseUrl, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(dadosFirebase)
-        });
-
-        document.getElementById("status").innerText = "Pergunta salva com sucesso!";
-      } catch (err) {
-        document.getElementById("status").innerText = "Erro: " + err.message;
-        console.error(err);
+        const json = await resTxt.json();
+        txt = json.txt || "";
+      } catch {
+        txt = "";
       }
-    }
 
-    processar();
-  </script>
+      // Verifica se já existe
+      if (txt.includes(mensagem)) {
+        document.getElementById("status").innerText = "Mensagem já existe.";
+        return;
+      }
+
+      // Adiciona mensagem nova
+      const novoTxt = txt ? `${txt},${mensagem}` : mensagem;
+
+      // Salva no Firebase
+      await fetch(txtURL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ txt: novoTxt })
+      });
+
+      document.getElementById("status").innerText = "Mensagem salva com sucesso!";
+    } catch (err) {
+      document.getElementById("status").innerText = "Erro: " + err.message;
+      console.error(err);
+    }
+  }
+
+  salvarMensagem();
+</script>
+
 </body>
 </html>
