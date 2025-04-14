@@ -68,9 +68,6 @@
         return;
       }
 
-      await salvarTmpPergunta(pergunta);
-
-      // Buscar resposta no backup
       const idBase64 = toBase64(pergunta);
       const backupRes = await fetch(`${baseBackupURL}/${idBase64}.json`);
       const dadosBackup = await backupRes.json();
@@ -78,31 +75,40 @@
       if (dadosBackup && dadosBackup.resposta) {
         const resposta = dadosBackup.resposta;
 
-        // Enviar resposta para res.json
+        // Verifica se a resposta já foi enviada
+        const resExistente = await fetch(apiRespostaURL);
+        const respostaAnterior = await resExistente.text();
+
+        if (respostaAnterior === resposta) {
+          document.getElementById("status").innerText = "Resposta já enviada anteriormente.";
+          setTimeout(() => {
+            window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+          }, 2000);
+          return;
+        }
+
+        // Salva nova pergunta temporária
+        await salvarTmpPergunta(pergunta);
+
+        // Enviar nova resposta
         const envio = await fetch(apiRespostaURL, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(resposta)
         });
 
-        if (!envio.ok) {
-          throw new Error("Erro ao enviar resposta.");
-        }
+        if (!envio.ok) throw new Error("Erro ao enviar resposta.");
 
         document.getElementById("status").innerText = "Resposta enviada. Abrindo WhatsApp...";
-      } else {
-        document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
-      }
+        window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
 
-      // Abrir WhatsApp com a pergunta
-      window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
+      } else {
+        document.getElementById("status").innerText = "Resposta não encontrada.";
+      }
 
     } catch (err) {
-      console.error("Erro geral:", err);
-      document.getElementById("status").innerText = "Erro ao processar. Abrindo WhatsApp...";
-      if (pergunta && pergunta.trim() !== "") {
-        window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
-      }
+      console.error("Erro:", err);
+      document.getElementById("status").innerText = "Erro ao processar.";
     } finally {
       setTimeout(() => {
         window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
