@@ -69,7 +69,6 @@
       const resBackup = await fetch(backupURL);
       const dados = await resBackup.json();
 
-      // Aqui garantimos que existe o objeto, e que "resposta" é uma string válida
       if (!dados || typeof dados.resposta !== "string" || dados.resposta.trim() === "") {
         throw new Error("[BACKUP] Resposta não encontrada no servidor de backup.");
       }
@@ -90,9 +89,14 @@
       await salvarTmpPergunta(pergunta);
 
       document.getElementById("status").innerText = "Redirecionando para WhatsApp...";
-      
-      // Redirecionamento direto para o WhatsApp (sem risco de abrir como busca)
-      window.location.replace("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta));
+
+      // Abre o WhatsApp em nova aba
+      window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
+
+      // Após abrir o WhatsApp, redireciona a aba principal para o site
+      setTimeout(() => {
+        window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+      }, 2000); // Espera 2 segundos antes de redirecionar
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
@@ -101,11 +105,6 @@
   }
 
   buscarEResponder();
-
-setTimeout(function() {
-  window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html"; // Coloca aqui a URL de destino
-}, 1000); // 1000 milissegundos = 1 segundos
-
 </script>
 
 </body>
