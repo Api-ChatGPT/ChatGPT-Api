@@ -2,43 +2,70 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Enviar para Autoresponder</title>
+  <title>Backup com Pergunta</title>
 </head>
 <body>
 
 <h2>Status:</h2>
-<div id="status">Aguardando envio...</div>
+<div id="status">Iniciando...</div>
 
 <script>
-  const autoresponderBaseURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder";
+  const autoresponderURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder.json";
+  const perguntaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json";
+  const backupBaseURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
 
-  function gerarID() {
-    return Date.now().toString();
+  function toBase64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
   }
 
-  async function enviarMensagem(message) {
-    const id = gerarID();
-    const url = `${autoresponderBaseURL}/${id}/query/message.json`;
+  async function salvarBackup(pergunta, resposta) {
+    const idBase64 = toBase64(pergunta);
+    const destino = `${backupBaseURL}/${idBase64}.json`;
 
+    const dados = {
+      id: idBase64,
+      pergunta: pergunta,
+      resposta: resposta
+    };
+
+    await fetch(destino, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dados)
+    });
+  }
+
+  async function iniciar() {
     try {
-      document.getElementById("status").innerText = "Enviando mensagem...";
+      document.getElementById("status").innerText = "Buscando mensagem...";
 
-      await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(message)
-      });
+      // Captura a última mensagem do autoresponder
+      const resAuto = await fetch(autoresponderURL);
+      const dadosAuto = await resAuto.json();
+      const ids = Object.keys(dadosAuto);
+      const ultimoID = ids[ids.length - 1];
+      const resMsg = await fetch(`https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder/${ultimoID}/query/message.json`);
+      const mensagem = await resMsg.json();
 
-      document.getElementById("status").innerText = "Mensagem enviada com sucesso!";
+      if (!mensagem || mensagem.trim() === "") throw new Error("Mensagem vazia.");
+
+      // Pega a pergunta da API
+      const resPergunta = await fetch(perguntaURL);
+      const pergunta = await resPergunta.json();
+
+      if (!pergunta || pergunta.trim() === "") throw new Error("Pergunta vazia.");
+
+      // Salva no backup
+      await salvarBackup(pergunta, mensagem);
+
+      document.getElementById("status").innerText = "Backup salvo com sucesso!";
     } catch (err) {
-      document.getElementById("status").innerText = "Erro ao enviar: " + err.message;
+      document.getElementById("status").innerText = "Erro: " + err.message;
       console.error(err);
     }
   }
 
-  // Exemplo: substitua por qualquer texto desejado
-  const mensagemExemplo = 'Mensagem de teste para autoresponder';
-  enviarMensagem(mensagemExemplo);
+  iniciar();
 </script>
 
 </body>
