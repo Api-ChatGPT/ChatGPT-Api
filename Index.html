@@ -90,10 +90,10 @@
 
       await salvarTmpPergunta(pergunta);
 
-      document.getElementById("status").innerText = "Resposta enviada com sucesso! Redirecionando para WhatsApp...";
+      document.getElementById("status").innerText = "Redirecionando para WhatsApp...";
       
-      // Redireciona direto pro WhatsApp com a pergunta como texto
-      window.location.href = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
+      // Redirecionamento forçado para o link real do WhatsApp
+      window.location.replace("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta));
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
@@ -102,8 +102,6 @@
   }
 
   buscarEResponder();
-
-  // Redirecionamento para página alternativa removido para evitar conflito
 </script>
 
 </body>
