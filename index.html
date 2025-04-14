@@ -9,7 +9,7 @@
     async function syncData() {
       const api1 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json';
       const api2 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json';
-      const api3 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json';
+      const api3 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/rss.json';
       const api4 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
 
       try {
@@ -27,27 +27,16 @@
           body: JSON.stringify(data2)
         });
 
-        // 3. Aguardar 10 segundos e limpar api2
-        setTimeout(async () => {
-          await fetch(api2, {
-            method: 'PUT',
-            body: JSON.stringify("") // ou null
-          });
-
-          document.body.innerHTML += '<p>Dados sincronizados e limpos com sucesso.</p>';
-
-          // Redireciona após limpeza
-          setTimeout(() => {
-            window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/filtragem.html";
-          }, 1);
-
-        }, 5000);
-
+        document.body.innerHTML += '<p>Dados sincronizados com sucesso.</p>';
       } catch (err) {
         console.error(err);
         document.body.innerHTML += '<p>Erro na sincronização.</p>';
       }
     }
+
+ setTimeout(() => {
+    window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/filtragem.html";
+  }, 1000);
 
     syncData();
   </script>
