@@ -64,8 +64,6 @@
         return;
       }
 
-      await salvarTmpPergunta(pergunta);
-
       const idBase64 = toBase64(pergunta);
       const backupURL = `${baseBackupURL}/${idBase64}.json`;
 
@@ -94,9 +92,10 @@
 
     } catch (err) {
       console.error("[ERRO]", err);
-      document.getElementById("status").innerText = "Erro ou resposta não encontrada. Abrindo WhatsApp...";
+      document.getElementById("status").innerText = "Erro ou resposta não encontrada.";
     } finally {
       if (pergunta && pergunta.trim() !== "") {
+        await salvarTmpPergunta(pergunta);
         window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
       }
 
