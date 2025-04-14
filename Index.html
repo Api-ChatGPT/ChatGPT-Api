@@ -36,9 +36,9 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(pergunta)
       });
-      console.log("Pergunta salva temporariamente.");
+      console.log("Pergunta salva em tmp.json");
     } catch (e) {
-      console.error("Erro ao salvar pergunta temporária:", e);
+      console.error("Erro ao salvar tmp:", e);
     }
   }
 
@@ -49,18 +49,19 @@
       const resPergunta = await fetch(apiPerguntaURL);
       const pergunta = await resPergunta.json();
 
-      if (typeof pergunta !== "string" || pergunta.trim() === "") throw new Error("Pergunta vazia ou não encontrada.");
-
-      // Verifica se já foi processada antes
-      const resTmp = await fetch(apiTmpPerguntaURL);
-      const tmpPergunta = await resTmp.json();
-
-      if (pergunta === tmpPergunta) {
-        document.getElementById("status").innerText = "Pergunta repetida. Ignorada.";
+      if (!pergunta || typeof pergunta !== "string" || pergunta.trim() === "") {
+        document.getElementById("status").innerText = "Nenhuma pergunta encontrada.";
         return;
       }
 
-      // Salva como temporária para evitar repetição
+      const resTmp = await fetch(apiTmpPerguntaURL);
+      const perguntaTmp = await resTmp.json();
+
+      if (pergunta === perguntaTmp) {
+        document.getElementById("status").innerText = "Pergunta já processada. Aguardando nova.";
+        return;
+      }
+
       await salvarTmpPergunta(pergunta);
 
       const idBase64 = toBase64(pergunta);
@@ -76,13 +77,18 @@
       }
 
       const resposta = dados.resposta;
-      console.log("Resposta que será enviada:", resposta);
 
-      await fetch(apiRespostaURL, {
+      const envioResposta = await fetch(apiRespostaURL, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify(resposta)
       });
+
+      if (!envioResposta.ok) {
+        throw new Error("Erro ao enviar resposta para res.json");
+      }
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
 
