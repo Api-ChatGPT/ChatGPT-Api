@@ -66,7 +66,7 @@
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";  
       setTimeout(() => {  
         window.open(urlWhatsApp, "_blank");  
-      }, 3000);  
+      }, 1);  
   
     } catch (err) {  
       document.getElementById("status").innerText = "Erro: " + err.message;  
@@ -78,6 +78,6 @@
   
   setTimeout(() => {  
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/auto-responder.html";  
-  }, 1000);  
+  }, 2500);  
 </script>  </body>  
 </html>
