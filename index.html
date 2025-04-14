@@ -17,6 +17,31 @@
       return btoa(unescape(encodeURIComponent(str)));
     }
 
+    async function verificarBackup(pergunta) {
+      const idBase64 = toBase64(pergunta);
+      const urlBackup = `${backupURL}/${idBase64}.json`;
+
+      try {
+        const dadosBackup = await fetch(urlBackup).then(r => r.json());
+
+        if (dadosBackup && dadosBackup.resposta) {
+          await fetch(respostaAPI, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosBackup.resposta)
+          });
+          document.body.innerHTML += '<p>Resposta do backup enviada para API.</p>';
+        } else {
+          const waURL = "https://wa.me/5511972553036?text=" + encodeURIComponent(pergunta);
+          document.body.innerHTML += '<p>Sem resposta no backup. Abrindo WhatsApp...</p>';
+          window.open(waURL, "_blank");
+        }
+      } catch (err) {
+        console.error("Erro no backup:", err);
+        document.body.innerHTML += '<p style="color:red;">Erro ao verificar backup.</p>';
+      }
+    }
+
     async function syncData() {
       try {
         const [pergunta, espelho, respostaSrv, respostaApp] = await Promise.all([
@@ -26,29 +51,22 @@
           fetch(respostaAPI).then(r => r.json())
         ]);
 
-        // Sistema 1: per == pes → então ativa verificação no backup
-        if (JSON.stringify(pergunta) === JSON.stringify(espelho)) {
-          document.body.innerHTML += '<p>pergunta igual ao espelho — verificando backup...</p>';
+        const perguntaValida = typeof pergunta === "string" && pergunta.trim() !== "";
 
-          const idBase64 = toBase64(pergunta);
-          const urlBackup = `${backupURL}/${idBase64}.json`;
-          const dadosBackup = await fetch(urlBackup).then(r => r.json());
+        // Regra 1: Se per == pes → verificar backup
+        if (JSON.stringify(pergunta) === JSON.stringify(espelho) && perguntaValida) {
+          document.body.innerHTML += '<p>per == pes → verificando backup...</p>';
+          await verificarBackup(pergunta);
+        }
 
-          if (dadosBackup && dadosBackup.resposta) {
-            await fetch(respostaAPI, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(dadosBackup.resposta)
-            });
-            document.body.innerHTML += '<p>Resposta do backup enviada para API.</p>';
-          } else {
-            const waURL = "https://wa.me/5511972553036?text=" + encodeURIComponent(pergunta);
-            document.body.innerHTML += '<p>Sem resposta no backup. Abrindo WhatsApp...</p>';
-            window.open(waURL, "_blank");
-          }
+        // Regra 2: Se res == res → verificar backup
+        else if (JSON.stringify(respostaSrv) === JSON.stringify(respostaApp) && perguntaValida) {
+          document.body.innerHTML += '<p>res == res → verificando backup...</p>';
+          await verificarBackup(pergunta);
+        }
 
-        } else {
-          // per != pes → envia para o servidor
+        // Regra 3: per != pes → envia per
+        if (JSON.stringify(pergunta) !== JSON.stringify(espelho)) {
           await fetch(perguntaServidor, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -57,16 +75,14 @@
           document.body.innerHTML += '<p>Pergunta enviada para o servidor.</p>';
         }
 
-        // Sistema 2: res != res → envia para API
+        // Regra 4: res != res → envia res
         if (JSON.stringify(respostaSrv) !== JSON.stringify(respostaApp)) {
           await fetch(respostaAPI, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(respostaSrv)
           });
-          document.body.innerHTML += '<p>Resposta enviada para a API.</p>';
-        } else {
-          document.body.innerHTML += '<p>Resposta igual — não enviada.</p>';
+          document.body.innerHTML += '<p>Resposta enviada para API.</p>';
         }
 
         setTimeout(() => {
@@ -74,7 +90,7 @@
         }, 1000);
 
       } catch (err) {
-        console.error(err);
+        console.error("Erro geral:", err);
         document.body.innerHTML += `<p style="color:red;">Erro: ${err.message}</p>`;
       }
     }
