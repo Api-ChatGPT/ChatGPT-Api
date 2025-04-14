@@ -22,30 +22,25 @@
 <script>
   const apiPerguntaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json";
   const apiRespostaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json";
+  const apiTmpPerguntaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/tmp.json";
   const baseBackupURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
 
   function toBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  async function apagarPergunta() {
+  async function salvarTmpPergunta(pergunta) {
     try {
-      await fetch(apiPerguntaURL, {
+      await fetch(apiTmpPerguntaURL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify("")
+        body: JSON.stringify(pergunta)
       });
-      console.log("Pergunta apagada do servidor.");
+      console.log("Pergunta salva temporariamente.");
     } catch (e) {
-      console.error("Erro ao apagar a pergunta:", e);
+      console.error("Erro ao salvar pergunta temporária:", e);
     }
   }
-
-
-// Apaga a pergunta após 10 segundos
-        setTimeout(() => {
-          apagarPergunta();
-        }, 5000);
 
   async function buscarEResponder() {
     try {
@@ -56,8 +51,19 @@
 
       if (typeof pergunta !== "string" || pergunta.trim() === "") throw new Error("Pergunta vazia ou não encontrada.");
 
-      const idBase64 = toBase64(pergunta);
+      // Verifica se já foi processada antes
+      const resTmp = await fetch(apiTmpPerguntaURL);
+      const tmpPergunta = await resTmp.json();
 
+      if (pergunta === tmpPergunta) {
+        document.getElementById("status").innerText = "Pergunta repetida. Ignorada.";
+        return;
+      }
+
+      // Salva como temporária para evitar repetição
+      await salvarTmpPergunta(pergunta);
+
+      const idBase64 = toBase64(pergunta);
       const resBackup = await fetch(`${baseBackupURL}/${idBase64}.json`);
       const dados = await resBackup.json();
 
@@ -66,11 +72,6 @@
       if (!dados || !dados.resposta) {
         document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
         window.open(urlWhatsApp, "_blank");
-
-        setTimeout(() => {
-          apagarPergunta();
-        }, 1000);
-
         return;
       }
 
@@ -87,8 +88,6 @@
 
       setTimeout(() => {
         window.open(urlWhatsApp, "_blank");
-
-
       }, 3000);
 
     } catch (err) {
