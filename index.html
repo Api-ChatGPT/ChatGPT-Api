@@ -2,138 +2,104 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Sistema Web em Segundo Plano</title>
+  <title>Sistema Sincronizado com Backup</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    #status { font-weight: bold; color: #333; margin-bottom: 10px; }
+  </style>
 </head>
 <body>
   <h2>Status:</h2>
   <div id="status">Iniciando...</div>
 
   <script>
-    const perguntaAPI = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json';
-    const perguntaServidor = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json';
-    const perguntaEspelho = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/pes.json';
-    const respostaServidor = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json';
-    const respostaAPI = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
-    const backupURL = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/backup';
-
+    const api1 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json';
+    const api2 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json';
+    const api3 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json';
+    const api4 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
     const autoresponderURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder.json";
+    const backupBaseURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
+    const perguntaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json";
 
     function toBase64(str) {
       return btoa(unescape(encodeURIComponent(str)));
     }
 
-    async function verificarBackup(pergunta) {
-      const idBase64 = toBase64(pergunta);
-      const urlBackup = `${backupURL}/${idBase64}.json`;
-
-      try {
-        const dadosBackup = await fetch(urlBackup).then(r => r.json());
-
-        if (dadosBackup && dadosBackup.resposta) {
-          await fetch(respostaAPI, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dadosBackup.resposta)
-          });
-          document.body.innerHTML += '<p>Resposta do backup enviada para API.</p>';
-        } else {
-          const waURL = "https://wa.me/5511972553036?text=" + encodeURIComponent(pergunta);
-          document.body.innerHTML += '<p>Sem resposta no backup. Abrindo WhatsApp...</p>';
-          window.open(waURL, "_blank");
-        }
-      } catch (err) {
-        document.body.innerHTML += '<p style="color:red;">Erro no backup: ' + err.message + '</p>';
-      }
-    }
-
-    async function syncData() {
-      try {
-        const [pergunta, espelho, respostaSrv, respostaApp] = await Promise.all([
-          fetch(perguntaAPI).then(r => r.json()),
-          fetch(perguntaEspelho).then(r => r.json()),
-          fetch(respostaServidor).then(r => r.json()),
-          fetch(respostaAPI).then(r => r.json())
-        ]);
-
-        const perguntaValida = typeof pergunta === "string" && pergunta.trim() !== "";
-
-        if (JSON.stringify(pergunta) === JSON.stringify(espelho) && perguntaValida) {
-          document.body.innerHTML += '<p>per == pes → verificando backup...</p>';
-          await verificarBackup(pergunta);
-        } else if (JSON.stringify(respostaSrv) === JSON.stringify(respostaApp) && perguntaValida) {
-          document.body.innerHTML += '<p>res == res → verificando backup...</p>';
-          await verificarBackup(pergunta);
-        }
-
-        if (JSON.stringify(pergunta) !== JSON.stringify(espelho)) {
-          await fetch(perguntaServidor, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(pergunta)
-          });
-          document.body.innerHTML += '<p>Pergunta enviada para o servidor.</p>';
-        }
-
-        if (JSON.stringify(respostaSrv) !== JSON.stringify(respostaApp)) {
-          await fetch(respostaAPI, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(respostaSrv)
-          });
-          document.body.innerHTML += '<p>Resposta enviada para API.</p>';
-        }
-
-      } catch (err) {
-        document.body.innerHTML += '<p style="color:red;">Erro no sync: ' + err.message + '</p>';
-      }
-    }
-
     async function salvarBackup(pergunta, resposta) {
       const idBase64 = toBase64(pergunta);
-      const destino = `${backupURL}/${idBase64}.json`;
+      const destino = `${backupBaseURL}/${idBase64}.json`;
 
-      const dados = {
-        id: idBase64,
-        pergunta: pergunta,
-        resposta: resposta
-      };
-
+      const dados = { id: idBase64, pergunta, resposta };
       await fetch(destino, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dados)
       });
+    }
 
-      document.body.innerHTML += "<p>Backup salvo com sucesso.</p>";
+    async function sistemaPrincipal() {
+      try {
+        const [res1, res2, res3, res4] = await Promise.all([
+          fetch(api1).then(r => r.json()),
+          fetch(api2).then(r => r.json()),
+          fetch(api3).then(r => r.json()),
+          fetch(api4).then(r => r.json())
+        ]);
+
+        // Sistema 1: per de api1 ≠ per de api2 => envia para api2
+        if (JSON.stringify(res1) !== JSON.stringify(res2)) {
+          await fetch(api2, {
+            method: "PUT",
+            body: JSON.stringify(res1)
+          });
+        }
+
+        // Sistema 2: res de api3 ≠ res de api4 => envia para api4
+        if (JSON.stringify(res3) !== JSON.stringify(res4)) {
+          await fetch(api4, {
+            method: "PUT",
+            body: JSON.stringify(res3)
+          });
+
+          // Faz backup também se foi enviada resposta nova
+          const perguntaAtual = await fetch(perguntaURL).then(r => r.json());
+          if (typeof perguntaAtual === "string" && perguntaAtual.trim() !== "") {
+            await salvarBackup(perguntaAtual, res3);
+          }
+        }
+
+        document.getElementById("status").innerText = "Sincronização e backup concluídos.";
+      } catch (err) {
+        document.getElementById("status").innerText = "Erro na sincronização.";
+        console.error(err);
+      }
     }
 
     async function sistemaAutoresponder() {
       try {
         const resAuto = await fetch(autoresponderURL);
         const dadosAuto = await resAuto.json();
-        const ids = Object.keys(dadosAuto);
+        const ids = Object.keys(dadosAuto || {});
         const ultimoID = ids[ids.length - 1];
-
         const resMsg = await fetch(`https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder/${ultimoID}/query/message.json`);
         const mensagem = await resMsg.json();
 
-        const resPergunta = await fetch(perguntaURL);
-        const pergunta = await resPergunta.json();
+        if (!mensagem || mensagem.trim() === "") return;
 
-        if (mensagem && mensagem.trim() !== "" && pergunta && pergunta.trim() !== "") {
-          await salvarBackup(pergunta, mensagem);
-        }
+        const perguntaAtual = await fetch(perguntaURL).then(r => r.json());
+        if (!perguntaAtual || perguntaAtual.trim() === "") return;
+
+        await salvarBackup(perguntaAtual, mensagem);
       } catch (err) {
-        document.body.innerHTML += '<p style="color:red;">Erro autoresponder: ' + err.message + '</p>';
+        console.error("Erro no sistema de autoresponder:", err);
       }
     }
 
-    // Executa os dois sistemas ao mesmo tempo
-    syncData();
+    sistemaPrincipal();
     sistemaAutoresponder();
 
     setTimeout(() => {
-      window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+      window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/auto-responder.html";
     }, 1000);
   </script>
 </body>
