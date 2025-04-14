@@ -1,8 +1,7 @@
-index.htm<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Backup automático</title>
   <title>Buscar e Responder</title>
   <style>
     body {
@@ -21,8 +20,6 @@ index.htm<!DOCTYPE html>
 <div id="status">Iniciando...</div>
 
 <script>
-  const autoresponderURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder.json";
-  const perguntaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json";
   const apiBaseURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/";
   const apiPerguntaURL = apiBaseURL + "api/chat/per.json";
   const apiRespostaURL = apiBaseURL + "api/chat/res.json";
@@ -33,85 +30,54 @@ index.htm<!DOCTYPE html>
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  async function processarBackup() {
-    try {
-      document.getElementById("status").innerText = "Processando...";
-      // 1. Buscar a última mensagem do autoresponder
-      const resAuto = await fetch(autoresponderURL);
-      const dadosAuto = await resAuto.json();
-      if (!dadosAuto || Object.keys(dadosAuto).length === 0) {
-        throw new Error("Nenhuma mensagem encontrada.");
-      }
   async function limparDados() {
     await fetch(apiPerguntaURL, { method: "DELETE" });
     await fetch(apiRespostaURL, { method: "DELETE" });
   }
 
-      const ids = Object.keys(dadosAuto);
-      const ultimoID = ids[ids.length - 1];
   async function buscarEResponder() {
     let pergunta = "";
     try {
       document.getElementById("status").innerText = "Buscando pergunta...";
 
-      const resMsg = await fetch(`https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder/${ultimoID}/query/message.json`);
-      const resposta = await resMsg.json();
       // 1. Busca pergunta
       const resPergunta = await fetch(apiPerguntaURL);
       pergunta = await resPergunta.text();
 
-      if (!resposta || typeof resposta !== "string") {
-        throw new Error("Mensagem inválida.");
       if (!pergunta || pergunta.trim() === "") {
         document.getElementById("status").innerText = "Nenhuma pergunta encontrada.";
         return;
       }
 
-      // 2. Buscar a pergunta da API (em texto puro)
-      const resPergunta = await fetch(perguntaURL);
-      const pergunta = await resPergunta.text();
       // 2. Converte pergunta para base64
       const idBase64 = toBase64(pergunta);
       const backupURL = `${baseBackupURL}/${idBase64}.json`;
 
-      if (!pergunta || typeof pergunta !== "string") {
-        throw new Error("Pergunta inválida.");
-      }
       // 3. Busca resposta no backup
       const resBackup = await fetch(backupURL);
       const dadosBackup = await resBackup.json();
 
-      const idBase64 = toBase64(pergunta);
       if (!dadosBackup || typeof dadosBackup.resposta !== "string") {
         document.getElementById("status").innerText = "Resposta não encontrada.";
         return;
       }
 
-      const dadosBackup = {
-        id: idBase64,
-        pergunta: pergunta,
-        resposta: resposta
-      };
       const resposta = dadosBackup.resposta;
 
-      // 3. Salvar no backup
-      await fetch(`https://server-chatgpt-api-default-rtdb.firebaseio.com/backup/${idBase64}.json`, {
       // 4. Envia resposta
       await fetch(apiRespostaURL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dadosBackup)
         body: JSON.stringify(resposta)
       });
 
-      document.getElementById("status").innerText = "Backup salvo com sucesso!";
       // 5. Limpa per.json e res.json
       await limparDados();
+
       document.getElementById("status").innerText = "Enviado com sucesso! Abrindo WhatsApp...";
       window.open(`https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(pergunta)}`, "_blank");
+
     } catch (err) {
-      document.getElementById("status").innerText = "Erro: " + err.message;
-      console.error(err);
       console.error("Erro:", err);
       document.getElementById("status").innerText = "Erro ao processar.";
     } finally {
@@ -119,14 +85,8 @@ index.htm<!DOCTYPE html>
         window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
       }, 5000);
     }
-    // Redireciona após 1 segundo
-    setTimeout(() => {
-      window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/Index.html";
-    }, 1000);
   }
 
-  // Executa automaticamente
-  processarBackup();
   buscarEResponder();
 </script>
 
