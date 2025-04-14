@@ -20,74 +20,81 @@
 <div id="status">Iniciando...</div>
 
 <script>
-  const apiBaseURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/";
-  const apiPerguntaURL = apiBaseURL + "api/chat/per.json";
-  const apiRespostaURL = apiBaseURL + "api/chat/res.json";
-  const baseBackupURL = apiBaseURL + "backup";
-  const numeroWhatsApp = "5511972553036";
+  // Novo domínio da API
+  const apiPerguntaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json";
+  const apiRespostaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json";
+  const baseBackupURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
 
+  // Função para codificar a pergunta em Base64
   function toBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  async function limparDados() {
-    await fetch(apiPerguntaURL, { method: "DELETE" });
-    await fetch(apiRespostaURL, { method: "DELETE" });
-  }
-
+  // Função para buscar a pergunta e enviar a resposta
   async function buscarEResponder() {
-    let pergunta = "";
     try {
       document.getElementById("status").innerText = "Buscando pergunta...";
 
-      // 1. Busca pergunta
+      // Busca a pergunta da API
       const resPergunta = await fetch(apiPerguntaURL);
-      pergunta = await resPergunta.text();
+      const pergunta = await resPergunta.json();
 
-      if (!pergunta || pergunta.trim() === "") {
+      if (!pergunta || typeof pergunta !== "string" || pergunta.trim() === "") {
         document.getElementById("status").innerText = "Nenhuma pergunta encontrada.";
         return;
       }
 
-      // 2. Converte pergunta para base64
+      // Codifica a pergunta em Base64
       const idBase64 = toBase64(pergunta);
       const backupURL = `${baseBackupURL}/${idBase64}.json`;
 
-      // 3. Busca resposta no backup
-      const resBackup = await fetch(backupURL);
-      const dadosBackup = await resBackup.json();
+      console.log("[BASE64] Chave gerada:", idBase64);
+      console.log("[BACKUP] Buscando em:", backupURL);
 
-      if (!dadosBackup || typeof dadosBackup.resposta !== "string") {
-        document.getElementById("status").innerText = "Resposta não encontrada.";
-        return;
+      // Busca a resposta no servidor de backup
+      const resBackup = await fetch(backupURL);
+      const dados = await resBackup.json();
+
+      if (!dados || typeof dados.resposta !== "string" || dados.resposta.trim() === "") {
+        throw new Error("Resposta não encontrada no backup.");
       }
 
-      const resposta = dadosBackup.resposta;
+      const resposta = dados.resposta;
+      console.log("[RESPOSTA] Conteúdo:", resposta);
 
-      // 4. Envia resposta
-      await fetch(apiRespostaURL, {
+      // Envia a resposta para a API
+      const envio = await fetch(apiRespostaURL, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify(resposta)
       });
 
-      // 5. Limpa per.json e res.json
-      await limparDados();
+      if (!envio.ok) {
+        throw new Error("Erro ao enviar a resposta para o servidor.");
+      }
 
-      document.getElementById("status").innerText = "Enviado com sucesso! Abrindo WhatsApp...";
-      window.open(`https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(pergunta)}`, "_blank");
+      // Exibe sucesso e abre o WhatsApp
+      document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
+      setTimeout(() => {
+        const link = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
+        window.open(link, "_blank");
+      }, 3000);
 
     } catch (err) {
-      console.error("Erro:", err);
-      document.getElementById("status").innerText = "Erro ao processar.";
-    } finally {
-      setTimeout(() => {
-        window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
-      }, 5000);
+      console.error("[ERRO]", err);
+      document.getElementById("status").innerText = "Erro: " + err.message;
     }
   }
 
+  // Executa a função para buscar e responder
   buscarEResponder();
+
+  // Redireciona após 1 segundo
+  setTimeout(() => {
+    window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+  }, 1000);
 </script>
 
 </body>
