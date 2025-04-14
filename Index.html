@@ -69,7 +69,8 @@
       const resBackup = await fetch(backupURL);
       const dados = await resBackup.json();
 
-      if (!dados || !dados.resposta) {
+      // Aqui garantimos que existe o objeto, e que "resposta" é uma string válida
+      if (!dados || typeof dados.resposta !== "string" || dados.resposta.trim() === "") {
         throw new Error("[BACKUP] Resposta não encontrada no servidor de backup.");
       }
 
@@ -78,9 +79,7 @@
 
       const enviar = await fetch(apiRespostaURL, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(resposta)
       });
 
@@ -92,7 +91,7 @@
 
       document.getElementById("status").innerText = "Redirecionando para WhatsApp...";
       
-      // Redirecionamento forçado para o link real do WhatsApp
+      // Redirecionamento direto para o WhatsApp (sem risco de abrir como busca)
       window.location.replace("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta));
 
     } catch (err) {
