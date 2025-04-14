@@ -79,8 +79,10 @@
       }
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
-      setTimeout(async () => {
-        window.open(urlWhatsApp, "_blank");
+  
+window.open(urlWhatsApp, "_blank");    
+
+setTimeout(async () => {
         await fetch(urlLimparPergunta, {
           method: "PUT",
           headers: {
@@ -88,7 +90,7 @@
           },
           body: JSON.stringify("")
         });
-      }, 1);
+      }, 2500);
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
@@ -99,7 +101,7 @@
   buscarEResponder().finally(() => {
     setTimeout(() => {
       window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/auto-responder.html";
-    }, 5000);
+    }, 2500);
   });
 </script>
 
