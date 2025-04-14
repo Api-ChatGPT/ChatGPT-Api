@@ -22,22 +22,22 @@
 <script>
   const apiPerguntaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json";
   const apiRespostaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json";
-  const apiTmpPerguntaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/tmp.json";
+  const apiTmpURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/tmp.json";
   const baseBackupURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
 
   function toBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  async function salvarTmpPergunta(pergunta) {
+  async function salvarTMP(pergunta, resposta) {
     try {
-      await fetch(apiTmpPerguntaURL, {
+      await fetch(apiTmpURL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pergunta)
+        body: JSON.stringify({ pergunta, resposta })
       });
     } catch (e) {
-      console.error("Erro ao salvar pergunta temporária:", e);
+      console.error("Erro ao salvar TMP:", e);
     }
   }
 
@@ -47,63 +47,49 @@
     try {
       document.getElementById("status").innerText = "Buscando pergunta...";
 
-      // Buscar pergunta
-      const perguntaRes = await fetch(apiPerguntaURL);
-      pergunta = await perguntaRes.text();
+      const resPergunta = await fetch(apiPerguntaURL);
+      pergunta = await resPergunta.text();
 
       if (!pergunta || pergunta.trim() === "") {
         document.getElementById("status").innerText = "Nenhuma pergunta encontrada.";
         return;
       }
 
-      // Verifica se é repetida
-      const tmpRes = await fetch(apiTmpPerguntaURL);
-      const perguntaTmp = await tmpRes.text();
-
-      if (pergunta === perguntaTmp) {
-        document.getElementById("status").innerText = "Pergunta já processada.";
-        setTimeout(() => {
-          window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
-        }, 2000);
-        return;
-      }
-
       const idBase64 = toBase64(pergunta);
-      const backupRes = await fetch(`${baseBackupURL}/${idBase64}.json`);
-      const dadosBackup = await backupRes.json();
+      const backupURL = `${baseBackupURL}/${idBase64}.json`;
 
-      if (dadosBackup && dadosBackup.resposta) {
-        const resposta = dadosBackup.resposta;
+      const resBackup = await fetch(backupURL);
+      const dados = await resBackup.json();
 
-        // Verifica se a resposta já foi enviada
-        const resExistente = await fetch(apiRespostaURL);
-        const respostaAnterior = await resExistente.text();
+      if (dados && typeof dados.resposta === "string" && dados.resposta.trim() !== "") {
+        const resposta = dados.resposta;
 
-        if (respostaAnterior === resposta) {
-          document.getElementById("status").innerText = "Resposta já enviada anteriormente.";
+        // Verificar se resposta já foi enviada
+        const resTmp = await fetch(apiTmpURL);
+        const tmpData = await resTmp.json();
+
+        if (tmpData && tmpData.resposta === resposta) {
+          document.getElementById("status").innerText = "Resposta já enviada anteriormente. Sem redirecionamento.";
           setTimeout(() => {
             window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
           }, 2000);
           return;
         }
 
-        // Salva nova pergunta temporária
-        await salvarTmpPergunta(pergunta);
+        // Salvar pergunta e resposta em tmp.json
+        await salvarTMP(pergunta, resposta);
 
-        // Enviar nova resposta
-        const envio = await fetch(apiRespostaURL, {
+        // Enviar resposta para res.json
+        await fetch(apiRespostaURL, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(resposta)
         });
 
-        if (!envio.ok) throw new Error("Erro ao enviar resposta.");
-
         document.getElementById("status").innerText = "Resposta enviada. Abrindo WhatsApp...";
         window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
-
       } else {
-        document.getElementById("status").innerText = "Resposta não encontrada.";
+        document.getElementById("status").innerText = "Resposta não encontrada no backup.";
       }
 
     } catch (err) {
