@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Buscar e Responder</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    #status {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Status:</h2>
+<div id="status">Iniciando...</div>
+
+<script>
+  const apiPerguntaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json";
+  const apiRespostaURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json";
+  const apiTmpURL = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/tmp.json";
+  const baseBackupURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
+  const numeroWhatsApp = "5511972553036";
+
+  function toBase64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  async function salvarTMP(pergunta, resposta) {
+    const dados = { pergunta, resposta };
+    await fetch(apiTmpURL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dados)
+    });
+  }
+
+  async function buscarEResponder() {
+    let pergunta = "";
+    try {
+      document.getElementById("status").innerText = "Buscando pergunta...";
+
+      // 1. Busca pergunta (texto simples)
+      const resPergunta = await fetch(apiPerguntaURL);
+      pergunta = await resPergunta.text();
+
+      if (!pergunta || pergunta.trim() === "") {
+        document.getElementById("status").innerText = "Nenhuma pergunta encontrada.";
+        return;
+      }
+
+      // 2. Converte pergunta para base64
+      const idBase64 = toBase64(pergunta);
+      const backupURL = `${baseBackupURL}/${idBase64}.json`;
+
+      // 3. Busca resposta no backup
+      const resBackup = await fetch(backupURL);
+      const dadosBackup = await resBackup.json();
+
+      if (!dadosBackup || typeof dadosBackup.resposta !== "string") {
+        document.getElementById("status").innerText = "Resposta não encontrada.";
+        return;
+      }
+
+      const resposta = dadosBackup.resposta;
+
+      // 4. Verifica TMP
+      const resTMP = await fetch(apiTmpURL);
+      const dadosTMP = await resTMP.json();
+
+      if (dadosTMP && dadosTMP.pergunta === pergunta && dadosTMP.resposta === resposta) {
+        document.getElementById("status").innerText = "Pergunta e resposta já enviadas.";
+        setTimeout(() => {
+          window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+        }, 2000);
+        return;
+      }
+
+      // 5. Salva nova TMP e envia resposta
+      await salvarTMP(pergunta, resposta);
+
+      await fetch(apiRespostaURL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(resposta)
+      });
+
+      document.getElementById("status").innerText = "Enviado com sucesso! Abrindo WhatsApp...";
+      window.open(`https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(pergunta)}`, "_blank");
+
+    } catch (err) {
+      console.error("Erro:", err);
+      document.getElementById("status").innerText = "Erro ao processar.";
+    } finally {
+      setTimeout(() => {
+        window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+      }, 2000);
+    }
+  }
+
+  buscarEResponder();
+</script>
+
+</body>
+</html>
