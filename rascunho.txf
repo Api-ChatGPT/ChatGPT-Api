@@ -7,36 +7,55 @@
   <h2>Sincronizando dados...</h2>
   <script>
     async function syncData() {
-      const api1 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json';
-      const api2 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json';
-      const api3 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json';
-      const api4 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
+      // URLs renomeadas para mais clareza
+      const perguntaAPI = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json';
+      const perguntaServidor = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json';
+      const perguntaEspelho = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/pes.json';
+      const respostaServidor = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json';
+      const respostaAPI = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
 
       try {
-        // 1. Pegar dados do api1 e enviar para api2
-        const data1 = await fetch(api1).then(res => res.json());
-        await fetch(api2, {
-          method: 'PUT',
-          body: JSON.stringify(data1)
-        });
+        // Busca os dados
+        const [pergunta, espelho, respostaSrv, respostaApp] = await Promise.all([
+          fetch(perguntaAPI).then(r => r.json()),
+          fetch(perguntaEspelho).then(r => r.json()),
+          fetch(respostaServidor).then(r => r.json()),
+          fetch(respostaAPI).then(r => r.json())
+        ]);
 
-        // 2. Pegar dados do api3 e enviar para api4
-        const data2 = await fetch(api3).then(res => res.json());
-        await fetch(api4, {
-          method: 'PUT',
-          body: JSON.stringify(data2)
-        });
+        // Sistema 1: se pergunta != espelho, envia para o servidor
+        if (JSON.stringify(pergunta) !== JSON.stringify(espelho)) {
+          await fetch(perguntaServidor, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pergunta)
+          });
+          document.body.innerHTML += '<p>Pergunta enviada para o servidor.</p>';
+        } else {
+          document.body.innerHTML += '<p>Pergunta igual ao espelho — não enviada.</p>';
+        }
 
-        document.body.innerHTML += '<p>Dados sincronizados com sucesso.</p>';
+        // Sistema 2: se respostaServidor != respostaAPI, envia para a API
+        if (JSON.stringify(respostaSrv) !== JSON.stringify(respostaApp)) {
+          await fetch(respostaAPI, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(respostaSrv)
+          });
+          document.body.innerHTML += '<p>Resposta enviada para a API.</p>';
+        } else {
+          document.body.innerHTML += '<p>Resposta igual — não enviada.</p>';
+        }
+
+        setTimeout(() => {
+          window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+        }, 1000);
+
       } catch (err) {
         console.error(err);
-        document.body.innerHTML += '<p>Erro na sincronização.</p>';
+        document.body.innerHTML += '<p style="color:red;">Erro na sincronização.</p>';
       }
     }
-
- setTimeout(() => {
-    window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
-  }, 1000);
 
     syncData();
   </script>
