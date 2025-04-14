@@ -62,8 +62,6 @@
         return;
       }
 
-      await salvarTmpPergunta(pergunta);
-
       const idBase64 = toBase64(pergunta);
       const backupURL = `${baseBackupURL}/${idBase64}.json`;
 
@@ -89,6 +87,9 @@
       if (!enviar.ok) {
         throw new Error("[API] Falha ao enviar resposta para res.json");
       }
+
+      // Só salva a tmp.json aqui, depois que tudo funcionou
+      await salvarTmpPergunta(pergunta);
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
       setTimeout(() => {
