@@ -36,9 +36,8 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(pergunta)
       });
-      console.log("[TMP] Pergunta salva temporariamente.");
     } catch (e) {
-      console.error("[TMP] Erro ao salvar:", e);
+      console.error("Erro ao salvar pergunta temporária:", e);
     }
   }
 
@@ -48,48 +47,46 @@
     try {
       document.getElementById("status").innerText = "Buscando pergunta...";
 
-      const resPergunta = await fetch(apiPerguntaURL);
-      pergunta = await resPergunta.json();
+      // Buscar pergunta
+      const perguntaRes = await fetch(apiPerguntaURL);
+      pergunta = await perguntaRes.text();
 
-      if (!pergunta || typeof pergunta !== "string" || pergunta.trim() === "") {
+      if (!pergunta || pergunta.trim() === "") {
         document.getElementById("status").innerText = "Nenhuma pergunta encontrada.";
         return;
       }
 
-      const resTmp = await fetch(apiTmpPerguntaURL);
-      const perguntaTmp = await resTmp.json();
+      // Verifica se é repetida
+      const tmpRes = await fetch(apiTmpPerguntaURL);
+      const perguntaTmp = await tmpRes.text();
 
       if (pergunta === perguntaTmp) {
         document.getElementById("status").innerText = "Pergunta já processada.";
-        // NÃO redireciona para WhatsApp
         setTimeout(() => {
           window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
         }, 2000);
         return;
       }
 
-      // Se chegou aqui, a pergunta é nova
       await salvarTmpPergunta(pergunta);
 
+      // Buscar resposta no backup
       const idBase64 = toBase64(pergunta);
-      const backupURL = `${baseBackupURL}/${idBase64}.json`;
+      const backupRes = await fetch(`${baseBackupURL}/${idBase64}.json`);
+      const dadosBackup = await backupRes.json();
 
-      console.log(`[BACKUP] Buscando resposta em: ${backupURL}`);
-      const resBackup = await fetch(backupURL);
-      const dados = await resBackup.json();
+      if (dadosBackup && dadosBackup.resposta) {
+        const resposta = dadosBackup.resposta;
 
-      if (dados && typeof dados.resposta === "string" && dados.resposta.trim() !== "") {
-        const resposta = dados.resposta;
-        console.log("[RESPOSTA] Conteúdo:", resposta);
-
-        const enviar = await fetch(apiRespostaURL, {
+        // Enviar resposta para res.json
+        const envio = await fetch(apiRespostaURL, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(resposta)
         });
 
-        if (!enviar.ok) {
-          throw new Error("[API] Falha ao enviar resposta para res.json");
+        if (!envio.ok) {
+          throw new Error("Erro ao enviar resposta.");
         }
 
         document.getElementById("status").innerText = "Resposta enviada. Abrindo WhatsApp...";
@@ -97,17 +94,16 @@
         document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
       }
 
-      // Redirecionar para WhatsApp, pois a pergunta é nova
+      // Abrir WhatsApp com a pergunta
       window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
 
     } catch (err) {
-      console.error("[ERRO]", err);
+      console.error("Erro geral:", err);
       document.getElementById("status").innerText = "Erro ao processar. Abrindo WhatsApp...";
       if (pergunta && pergunta.trim() !== "") {
         window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
       }
     } finally {
-      // Sempre redireciona para a página final após 2s
       setTimeout(() => {
         window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
       }, 2000);
