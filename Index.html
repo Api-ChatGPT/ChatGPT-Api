@@ -29,18 +29,6 @@
     return btoa(unescape(encodeURIComponent(str)));
   }
 
-  async function salvarTMP(pergunta, resposta) {
-    try {
-      await fetch(apiTmpURL, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pergunta, resposta })
-      });
-    } catch (e) {
-      console.error("Erro ao salvar TMP:", e);
-    }
-  }
-
   async function buscarEResponder() {
     let pergunta = "";
 
@@ -88,6 +76,19 @@
 
         document.getElementById("status").innerText = "Resposta enviada. Abrindo WhatsApp...";
         window.open("https://wa.me/5511972553036?text=" + encodeURIComponent(pergunta), "_blank");
+
+async function salvarTMP(pergunta, resposta) {
+    try {
+      await fetch(apiTmpURL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pergunta, resposta })
+      });
+    } catch (e) {
+      console.error("Erro ao salvar TMP:", e);
+    }
+  }
+
       } else {
         document.getElementById("status").innerText = "Resposta não encontrada no backup.";
       }
