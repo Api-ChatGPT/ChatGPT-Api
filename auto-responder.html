@@ -13,6 +13,7 @@
   const autoresponderURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder.json";
   const perguntaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json";
   const backupBaseURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
+  const urlLimparPergunta = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json";
 
   function toBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
@@ -35,11 +36,18 @@
     });
   }
 
+  async function limparPergunta() {
+    await fetch(urlLimparPergunta, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify("")
+    });
+  }
+
   async function iniciar() {
     try {
       document.getElementById("status").innerText = "Buscando mensagem...";
 
-      // Captura a última mensagem do autoresponder
       const resAuto = await fetch(autoresponderURL);
       const dadosAuto = await resAuto.json();
       const ids = Object.keys(dadosAuto);
@@ -49,16 +57,17 @@
 
       if (!mensagem || mensagem.trim() === "") throw new Error("Mensagem vazia.");
 
-      // Pega a pergunta da API
       const resPergunta = await fetch(perguntaURL);
       const pergunta = await resPergunta.json();
 
       if (!pergunta || pergunta.trim() === "") throw new Error("Pergunta vazia.");
 
-      // Salva no backup
       await salvarBackup(pergunta, mensagem);
 
-      document.getElementById("status").innerText = "Backup salvo com sucesso!";
+      // Limpar a API de pergunta
+      await limparPergunta();
+
+      document.getElementById("status").innerText = "Backup salvo e pergunta apagada com sucesso!";
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
       console.error(err);
@@ -67,7 +76,6 @@
 
   iniciar();
 
-// Redireciona após 1 segundo
   setTimeout(() => {
     window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
   }, 1000);
