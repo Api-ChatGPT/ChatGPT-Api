@@ -43,11 +43,13 @@
   }
 
   async function buscarEResponder() {
+    let pergunta = "";
+
     try {
       document.getElementById("status").innerText = "Buscando pergunta...";
 
       const resPergunta = await fetch(apiPerguntaURL);
-      const pergunta = await resPergunta.json();
+      pergunta = await resPergunta.json();
 
       if (!pergunta || typeof pergunta !== "string" || pergunta.trim() === "") {
         document.getElementById("status").innerText = "Nenhuma pergunta encontrada.";
@@ -87,18 +89,17 @@
 
         document.getElementById("status").innerText = "Resposta enviada. Abrindo WhatsApp...";
       } else {
-        console.warn("[BACKUP] Resposta não encontrada. Apenas redirecionando...");
-        document.getElementById("status").innerText = "Resposta não encontrada. Redirecionando para WhatsApp...";
+        throw new Error("Resposta não encontrada no backup.");
       }
 
-      // Sempre abre o WhatsApp com a pergunta
-      window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
-
     } catch (err) {
-      document.getElementById("status").innerText = "Erro: " + err.message;
       console.error("[ERRO]", err);
+      document.getElementById("status").innerText = "Erro ou resposta não encontrada. Abrindo WhatsApp...";
     } finally {
-      // Sempre redireciona após 2 segundos
+      if (pergunta && pergunta.trim() !== "") {
+        window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
+      }
+
       setTimeout(() => {
         window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
       }, 2000);
