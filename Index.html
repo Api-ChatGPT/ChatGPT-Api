@@ -88,13 +88,12 @@
         throw new Error("[API] Falha ao enviar resposta para res.json");
       }
 
-      // Só salva a tmp.json aqui, depois que tudo funcionou
       await salvarTmpPergunta(pergunta);
 
-      document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
-      setTimeout(() => {
-        window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
-      }, 3000);
+      document.getElementById("status").innerText = "Resposta enviada com sucesso! Redirecionando para WhatsApp...";
+      
+      // Redireciona direto pro WhatsApp com a pergunta como texto
+      window.location.href = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
@@ -104,9 +103,7 @@
 
   buscarEResponder();
 
-  setTimeout(() => {
-    window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
-  }, 1000);
+  // Redirecionamento para página alternativa removido para evitar conflito
 </script>
 
 </body>
