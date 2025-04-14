@@ -36,9 +36,9 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(pergunta)
       });
-      console.log("Pergunta salva em tmp.json");
+      console.log("[TMP] Pergunta salva temporariamente.");
     } catch (e) {
-      console.error("Erro ao salvar tmp:", e);
+      console.error("[TMP] Erro ao salvar:", e);
     }
   }
 
@@ -58,27 +58,27 @@
       const perguntaTmp = await resTmp.json();
 
       if (pergunta === perguntaTmp) {
-        document.getElementById("status").innerText = "Pergunta já processada. Aguardando nova.";
+        document.getElementById("status").innerText = "Pergunta já processada.";
         return;
       }
 
       await salvarTmpPergunta(pergunta);
 
       const idBase64 = toBase64(pergunta);
-      const resBackup = await fetch(`${baseBackupURL}/${idBase64}.json`);
+      const backupURL = `${baseBackupURL}/${idBase64}.json`;
+
+      console.log(`[BACKUP] Buscando resposta em: ${backupURL}`);
+      const resBackup = await fetch(backupURL);
       const dados = await resBackup.json();
 
-      const urlWhatsApp = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
-
       if (!dados || !dados.resposta) {
-        document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
-        window.open(urlWhatsApp, "_blank");
-        return;
+        throw new Error("[BACKUP] Resposta não encontrada no servidor de backup.");
       }
 
       const resposta = dados.resposta;
+      console.log("[RESPOSTA] Conteúdo:", resposta);
 
-      const envioResposta = await fetch(apiRespostaURL, {
+      const enviar = await fetch(apiRespostaURL, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
@@ -86,19 +86,18 @@
         body: JSON.stringify(resposta)
       });
 
-      if (!envioResposta.ok) {
-        throw new Error("Erro ao enviar resposta para res.json");
+      if (!enviar.ok) {
+        throw new Error("[API] Falha ao enviar resposta para res.json");
       }
 
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
-
       setTimeout(() => {
-        window.open(urlWhatsApp, "_blank");
+        window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
       }, 3000);
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
-      console.error(err);
+      console.error("[ERRO]", err);
     }
   }
 
