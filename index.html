@@ -7,53 +7,44 @@
   <h2>Sincronizando dados...</h2>
   <script>
     async function syncData() {
-      const per1 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json';
-      const per2 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json';
-      const pes  = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/pes.json';
-      const res1 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json';
-      const res2 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
+      // URLs renomeadas para mais clareza
+      const perguntaAPI = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json';
+      const perguntaServidor = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json';
+      const perguntaEspelho = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/pes.json';
+      const respostaServidor = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json';
+      const respostaAPI = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
 
       try {
-        // Buscar dados
-        const [dataPer1, dataPer2, dataPes, dataRes1, dataRes2] = await Promise.all([
-          fetch(per1).then(res => res.json()),
-          fetch(per2).then(res => res.json()),
-          fetch(pes).then(res => res.json()),
-          fetch(res1).then(res => res.json()),
-          fetch(res2).then(res => res.json())
+        // Busca os dados
+        const [pergunta, espelho, respostaSrv, respostaApp] = await Promise.all([
+          fetch(perguntaAPI).then(r => r.json()),
+          fetch(perguntaEspelho).then(r => r.json()),
+          fetch(respostaServidor).then(r => r.json()),
+          fetch(respostaAPI).then(r => r.json())
         ]);
 
-        const resIguais = JSON.stringify(dataRes1) === JSON.stringify(dataRes2);
-        const perIguais = JSON.stringify(dataPer1) === JSON.stringify(dataPer2);
-
-        if (resIguais && perIguais) {
-          // Envia per.json
-          await fetch(per2, {
+        // Sistema 1: se pergunta != espelho, envia para o servidor
+        if (JSON.stringify(pergunta) !== JSON.stringify(espelho)) {
+          await fetch(perguntaServidor, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataPer1)
+            body: JSON.stringify(pergunta)
           });
-
-          // Envia res.json
-          await fetch(res2, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataRes1)
-          });
-
-          document.body.innerHTML += '<p>res e per iguais — dados enviados.</p>';
+          document.body.innerHTML += '<p>Pergunta enviada para o servidor.</p>';
         } else {
-          document.body.innerHTML += '<p>res e/ou per diferentes — nada enviado.</p>';
+          document.body.innerHTML += '<p>Pergunta igual ao espelho — não enviada.</p>';
         }
 
-        // Limpa per1 se for igual a pes
-        if (JSON.stringify(dataPer1) === JSON.stringify(dataPes)) {
-          await fetch(per1, {
+        // Sistema 2: se respostaServidor != respostaAPI, envia para a API
+        if (JSON.stringify(respostaSrv) !== JSON.stringify(respostaApp)) {
+          await fetch(respostaAPI, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(null)
+            body: JSON.stringify(respostaSrv)
           });
-          document.body.innerHTML += '<p>per.json limpo por ser igual a pes.json.</p>';
+          document.body.innerHTML += '<p>Resposta enviada para a API.</p>';
+        } else {
+          document.body.innerHTML += '<p>Resposta igual — não enviada.</p>';
         }
 
         setTimeout(() => {
