@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Backup com Pergunta</title>
+</head>
+<body>
+
+<h2>Status:</h2>
+<div id="status">Iniciando...</div>
+
+<script>
+  const autoresponderURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder.json";
+  const perguntaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json";
+  const backupBaseURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
+
+  function toBase64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  async function salvarBackup(pergunta, resposta) {
+    const idBase64 = toBase64(pergunta);
+    const destino = `${backupBaseURL}/${idBase64}.json`;
+
+    const dados = {
+      id: idBase64,
+      pergunta: pergunta,
+      resposta: resposta
+    };
+
+    await fetch(destino, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dados)
+    });
+  }
+
+  async function iniciar() {
+    try {
+      document.getElementById("status").innerText = "Buscando mensagem...";
+
+      // Captura a última mensagem do autoresponder
+      const resAuto = await fetch(autoresponderURL);
+      const dadosAuto = await resAuto.json();
+      const ids = Object.keys(dadosAuto);
+      const ultimoID = ids[ids.length - 1];
+      const resMsg = await fetch(`https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder/${ultimoID}/query/message.json`);
+      const mensagem = await resMsg.json();
+
+      if (!mensagem || mensagem.trim() === "") throw new Error("Mensagem vazia.");
+
+      // Pega a pergunta da API
+      const resPergunta = await fetch(perguntaURL);
+      const pergunta = await resPergunta.json();
+
+      if (!pergunta || pergunta.trim() === "") throw new Error("Pergunta vazia.");
+
+      // Salva no backup
+      await salvarBackup(pergunta, mensagem);
+
+      document.getElementById("status").innerText = "Backup salvo com sucesso!";
+    } catch (err) {
+      document.getElementById("status").innerText = "Erro: " + err.message;
+      console.error(err);
+    }
+  }
+
+  iniciar();
+
+// Redireciona após 1 segundo
+  setTimeout(() => {
+    window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+  }, 1000);
+
+</script>
+
+</body>
+</html>
