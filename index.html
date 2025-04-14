@@ -24,42 +24,36 @@
         ]);
 
         const resIguais = JSON.stringify(dataRes1) === JSON.stringify(dataRes2);
-        const perIguais = JSON.stringify(dataPer1) === JSON.stringify(dataPes);
+        const perIguais = JSON.stringify(dataPer1) === JSON.stringify(dataPer2);
 
-        if (!resIguais && !perIguais) {
-          // Enviar per.json
+        if (resIguais && perIguais) {
+          // Envia per.json
           await fetch(per2, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dataPer1)
           });
 
-          // Enviar res.json
+          // Envia res.json
           await fetch(res2, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dataRes1)
           });
 
-          document.body.innerHTML += '<p>Dados per e res sincronizados.</p>';
+          document.body.innerHTML += '<p>res e per iguais — dados enviados.</p>';
         } else {
-          if (resIguais) {
-            document.body.innerHTML += '<p>res.json iguais — não enviado.</p>';
-          }
-          if (perIguais) {
-            document.body.innerHTML += '<p>per.json igual a pes.json — não enviado.</p>';
-          }
+          document.body.innerHTML += '<p>res e/ou per diferentes — nada enviado.</p>';
         }
 
-        // Limpar per1 se for igual a pes
-        if (perIguais) {
+        // Limpa per1 se for igual a pes
+        if (JSON.stringify(dataPer1) === JSON.stringify(dataPes)) {
           await fetch(per1, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(null)
           });
-
-          document.body.innerHTML += '<p>per.json foi limpo por ser igual a pes.json.</p>';
+          document.body.innerHTML += '<p>per.json limpo por ser igual a pes.json.</p>';
         }
 
         setTimeout(() => {
