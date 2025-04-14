@@ -7,36 +7,66 @@
   <h2>Sincronizando dados...</h2>
   <script>
     async function syncData() {
-      const api1 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json';
-      const api2 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json';
-      const api3 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json';
-      const api4 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
+      const per1 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json';
+      const per2 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json';
+      const pes  = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/pes.json';
+      const res1 = 'https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json';
+      const res2 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
 
       try {
-        // 1. Pegar dados do api1 e enviar para api2
-        const data1 = await fetch(api1).then(res => res.json());
-        await fetch(api2, {
-          method: 'PUT',
-          body: JSON.stringify(data1)
-        });
+        // Buscar os dados das APIs
+        const [dataPer1, dataPer2, dataPes, dataRes1, dataRes2] = await Promise.all([
+          fetch(per1).then(res => res.json()),
+          fetch(per2).then(res => res.json()),
+          fetch(pes).then(res => res.json()),
+          fetch(res1).then(res => res.json()),
+          fetch(res2).then(res => res.json())
+        ]);
 
-        // 2. Pegar dados do api3 e enviar para api4
-        const data2 = await fetch(api3).then(res => res.json());
-        await fetch(api4, {
-          method: 'PUT',
-          body: JSON.stringify(data2)
-        });
+        // Comparar res.json primeiro
+        const resIguais = JSON.stringify(dataRes1) === JSON.stringify(dataRes2);
 
-        document.body.innerHTML += '<p>Dados sincronizados com sucesso.</p>';
+        if (!resIguais) {
+          // Enviar per.json
+          await fetch(per2, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataPer1)
+          });
+
+          // Enviar res.json
+          await fetch(res2, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataRes1)
+          });
+
+          document.body.innerHTML += '<p>Dados per e res sincronizados.</p>';
+        } else {
+          document.body.innerHTML += '<p>Dados res.json são iguais — nada enviado.</p>';
+        }
+
+        // Limpar per1 se for igual a pes
+        if (JSON.stringify(dataPer1) === JSON.stringify(dataPes)) {
+          await fetch(per1, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(null)
+          });
+
+          document.body.innerHTML += '<p>per.json limpo por ser igual a pes.json.</p>';
+        }
+
+        // Redireciona após tudo
+        setTimeout(() => {
+          window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+        }, 1000);
+
       } catch (err) {
         console.error(err);
         document.body.innerHTML += '<p>Erro na sincronização.</p>';
       }
     }
-
- setTimeout(() => {
-    window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
-  }, 1000);
 
     syncData();
   </script>
