@@ -89,18 +89,16 @@
       await salvarTmpPergunta(pergunta);
 
       document.getElementById("status").innerText = "Redirecionando para WhatsApp...";
-
-      // Abre o WhatsApp em nova aba
       window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
-
-      // Após abrir o WhatsApp, redireciona a aba principal para o site
-      setTimeout(() => {
-        window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
-      }, 2000); // Espera 2 segundos antes de redirecionar
 
     } catch (err) {
       document.getElementById("status").innerText = "Erro: " + err.message;
       console.error("[ERRO]", err);
+    } finally {
+      // Sempre redireciona após 2 segundos, mesmo que tenha erro
+      setTimeout(() => {
+        window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+      }, 2000);
     }
   }
 
