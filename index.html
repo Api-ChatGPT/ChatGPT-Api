@@ -14,7 +14,7 @@
       const res2 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
 
       try {
-        // Buscar os dados das APIs
+        // Buscar todos os dados
         const [dataPer1, dataPer2, dataPes, dataRes1, dataRes2] = await Promise.all([
           fetch(per1).then(res => res.json()),
           fetch(per2).then(res => res.json()),
@@ -23,7 +23,6 @@
           fetch(res2).then(res => res.json())
         ]);
 
-        // Comparar res.json primeiro
         const resIguais = JSON.stringify(dataRes1) === JSON.stringify(dataRes2);
 
         if (!resIguais) {
@@ -41,30 +40,30 @@
             body: JSON.stringify(dataRes1)
           });
 
-          document.body.innerHTML += '<p>Dados per e res sincronizados.</p>';
+          document.body.innerHTML += '<p><strong>res.json diferentes:</strong> dados enviados com sucesso.</p>';
         } else {
-          document.body.innerHTML += '<p>Dados res.json são iguais — nada enviado.</p>';
+          document.body.innerHTML += '<p><strong>res.json iguais:</strong> envio ignorado.</p>';
         }
 
-        // Limpar per1 se for igual a pes
-        if (JSON.stringify(dataPer1) === JSON.stringify(dataPes)) {
+        // Verifica se deve limpar per.json
+        const perIgualPes = JSON.stringify(dataPer1) === JSON.stringify(dataPes);
+        if (perIgualPes) {
           await fetch(per1, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(null)
           });
 
-          document.body.innerHTML += '<p>per.json limpo por ser igual a pes.json.</p>';
+          document.body.innerHTML += '<p>per.json foi limpo por ser igual a pes.json.</p>';
         }
 
-        // Redireciona após tudo
         setTimeout(() => {
           window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
         }, 1000);
 
       } catch (err) {
         console.error(err);
-        document.body.innerHTML += '<p>Erro na sincronização.</p>';
+        document.body.innerHTML += '<p style="color:red;">Erro na sincronização.</p>';
       }
     }
 
