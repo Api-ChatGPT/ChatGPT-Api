@@ -29,6 +29,19 @@
     return btoa(unescape(encodeURIComponent(str)));
   }
 
+  async function salvarTMP(pergunta, resposta) {
+    try {
+      const dados = { pergunta, resposta };
+      await fetch(apiTmpURL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados)
+      });
+    } catch (e) {
+      console.error("Erro ao salvar TMP:", e);
+    }
+  }
+
   async function buscarEResponder() {
     let pergunta = "";
 
@@ -49,54 +62,45 @@
       const resBackup = await fetch(backupURL);
       const dados = await resBackup.json();
 
-      if (dados && typeof dados.resposta === "string" && dados.resposta.trim() !== "") {
-        const resposta = dados.resposta;
+      if (!dados || typeof dados.resposta !== "string" || dados.resposta.trim() === "") {
+        document.getElementById("status").innerText = "Resposta não encontrada no backup.";
+        return;
+      }
 
-        // Verificar se resposta já foi enviada
-        const resTmp = await fetch(apiTmpURL);
-        const tmpData = await resTmp.json();
+      const resposta = dados.resposta;
 
-        if (tmpData && tmpData.resposta === resposta) {
-          document.getElementById("status").innerText = "Resposta já enviada anteriormente. Sem redirecionamento.";
-          setTimeout(() => {
-            window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
-          }, 2000);
-          return;
-        }
+      // Verifica se resposta já foi enviada
+      const resTmp = await fetch(apiTmpURL);
+      const tmpData = await resTmp.json();
 
-        // Salvar pergunta e resposta em tmp.json
-        await salvarTMP(pergunta, resposta);
+      if (tmpData && tmpData.resposta === resposta) {
+        document.getElementById("status").innerText = "Resposta já enviada anteriormente. Sem redirecionamento.";
+        setTimeout(() => {
+          window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+        }, 2000);
+        return;
+      }
 
-        // Enviar resposta para res.json
-        await fetch(apiRespostaURL, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(resposta)
-        });
+      // Salva pergunta e resposta em tmp.json antes de qualquer envio
+      await salvarTMP(pergunta, resposta);
 
-        document.getElementById("status").innerText = "Resposta enviada. Abrindo WhatsApp...";
-        window.open("https://wa.me/5511972553036?text=" + encodeURIComponent(pergunta), "_blank");
-
-async function salvarTMP(pergunta, resposta) {
-    try {
-      await fetch(apiTmpURL, {
+      // Envia resposta para res.json
+      await fetch(apiRespostaURL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pergunta, resposta })
+        body: JSON.stringify(resposta)
       });
-    } catch (e) {
-      console.error("Erro ao salvar TMP:", e);
-    }
-  }
 
-      } else {
-        document.getElementById("status").innerText = "Resposta não encontrada no backup.";
-      }
+      document.getElementById("status").innerText = "Resposta enviada. Abrindo WhatsApp...";
+
+      // Redireciona para o WhatsApp com a pergunta
+      window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
 
     } catch (err) {
       console.error("Erro:", err);
       document.getElementById("status").innerText = "Erro ao processar.";
     } finally {
+      // Redireciona para a página inicial após 2 segundos
       setTimeout(() => {
         window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
       }, 2000);
