@@ -27,11 +27,13 @@
           body: JSON.stringify(data2)
         });
 
-        // 3. Limpar api2 (deixar em branco)
+        // 3. Limpar api2 (deixar em branco) depois de 5 segundos...
+setTimeout(() => {
         await fetch(api2, {
           method: 'PUT',
           body: JSON.stringify("") // ou null se quiser deletar
         });
+}, 5000);
 
         document.body.innerHTML += '<p>Dados sincronizados e limpos com sucesso.</p>';
       } catch (err) {
