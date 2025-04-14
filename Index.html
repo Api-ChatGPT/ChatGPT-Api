@@ -41,6 +41,12 @@
     }
   }
 
+
+// Apaga a pergunta após 10 segundos
+        setTimeout(() => {
+          apagarPergunta();
+        }, 5000);
+
   async function buscarEResponder() {
     try {
       document.getElementById("status").innerText = "Buscando pergunta...";
@@ -82,10 +88,6 @@
       setTimeout(() => {
         window.open(urlWhatsApp, "_blank");
 
-        // Apaga a pergunta após 10 segundos
-        setTimeout(() => {
-          apagarPergunta();
-        }, 1000);
 
       }, 3000);
 
