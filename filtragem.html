@@ -1,109 +1,83 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Buscar e Responder</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
-    #status {
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 10px;
-    }
-  </style>
-</head>
-<body>
-
-<h2>Status:</h2>
-<div id="status">Iniciando...</div>
-
-<script>
-  const apiPerguntaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json";
-  const apiRespostaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json";
-  const baseBackupURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
-  const urlLimparPergunta = "https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/per.json";
-
-  function toBase64(str) {
-    return btoa(unescape(encodeURIComponent(str)));
-  }
-
-  async function buscarEResponder() {
-    try {
-      document.getElementById("status").innerText = "Buscando pergunta...";
-
-      const resPergunta = await fetch(apiPerguntaURL);
-      const pergunta = await resPergunta.json();
-
-      if (!pergunta || typeof pergunta !== "string" || pergunta.trim() === "") {
-        document.getElementById("status").innerText = "Nenhuma pergunta encontrada.";
-        return;
-      }
-
-      const idBase64 = toBase64(pergunta);
-      const backupURL = `${baseBackupURL}/${idBase64}.json`;
-
-      const resBackup = await fetch(backupURL);
-      const dados = await resBackup.json();
-
-      const urlWhatsApp = "https://wa.me/5511972553036?text=" + encodeURIComponent(pergunta);
-
-      if (!dados || !dados.resposta) {
-        document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";
-        setTimeout(async () => {
-          window.open(urlWhatsApp, "_blank");
-          await fetch(urlLimparPergunta, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify("")
-          });
-        }, 3000);
-        return;
-      }
-
-      const resposta = dados.resposta;
-
-      const envio = await fetch(apiRespostaURL, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(resposta)
-      });
-
-      if (!envio.ok) {
-        throw new Error("Erro ao enviar a resposta para o servidor.");
-      }
-
-      document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
+<!DOCTYPE html>  <html lang="pt-BR">  
+<head>  
+  <meta charset="UTF-8">  
+  <title>Buscar e Responder</title>  
+  <style>  
+    body {  
+      font-family: Arial, sans-serif;  
+    }  
+    #status {  
+      font-weight: bold;  
+      color: #333;  
+      margin-bottom: 10px;  
+    }  
+  </style>  
+</head>  
+<body>  <h2>Status:</h2>  
+<div id="status">Iniciando...</div>  <script>  
+  const apiPerguntaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json";  
+  const apiRespostaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/res.json";  
+  const baseBackupURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";  
   
-window.open(urlWhatsApp, "_blank");    
-
-setTimeout(async () => {
-        await fetch(urlLimparPergunta, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify("")
-        });
-      }, 2500);
-
-    } catch (err) {
-      document.getElementById("status").innerText = "Erro: " + err.message;
-      console.error(err);
-    }
-  }
-
-  buscarEResponder().finally(() => {
-    setTimeout(() => {
-      window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/auto-responder.html";
-    }, 2500);
-  });
-</script>
-
-</body>
+  function toBase64(str) {  
+    return btoa(unescape(encodeURIComponent(str)));  
+  }  
+  
+  async function buscarEResponder() {  
+    try {  
+      document.getElementById("status").innerText = "Buscando pergunta...";  
+  
+      const resPergunta = await fetch(apiPerguntaURL);  
+      const pergunta = await resPergunta.json();  
+  
+      if (!pergunta || typeof pergunta !== "string" || pergunta.trim() === "") {  
+        document.getElementById("status").innerText = "Nenhuma pergunta encontrada.";  
+        return;  
+      }  
+  
+      const idBase64 = toBase64(pergunta);  
+      const backupURL = `${baseBackupURL}/${idBase64}.json`;  
+  
+      const resBackup = await fetch(backupURL);  
+      const dados = await resBackup.json();  
+  
+      const urlWhatsApp = "https://wa.me/5511972553036?text=" + encodeURIComponent(pergunta);  
+  
+      if (!dados || !dados.resposta) {  
+        document.getElementById("status").innerText = "Resposta não encontrada. Abrindo WhatsApp...";  
+        window.open(urlWhatsApp, "_blank");  
+        return;  
+      }  
+  
+      const resposta = dados.resposta;  
+  
+      const envio = await fetch(apiRespostaURL, {  
+        method: "PUT",  
+        headers: {  
+          "Content-Type": "application/json"  
+        },  
+        body: JSON.stringify(resposta)  
+      });  
+  
+      if (!envio.ok) {  
+        throw new Error("Erro ao enviar a resposta para o servidor.");  
+      }  
+  
+      document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";  
+      setTimeout(() => {  
+        window.open(urlWhatsApp, "_blank");  
+      }, 3000);  
+  
+    } catch (err) {  
+      document.getElementById("status").innerText = "Erro: " + err.message;  
+      console.error(err);  
+    }  
+  }  
+  
+  buscarEResponder();  
+  
+  setTimeout(() => {  
+    window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/auto-responder.html";  
+  }, 1000);  
+</script>  </body>  
 </html>
