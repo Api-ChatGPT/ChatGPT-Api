@@ -71,36 +71,33 @@
       const resBackup = await fetch(backupURL);
       const dados = await resBackup.json();
 
-      if (!dados || typeof dados.resposta !== "string" || dados.resposta.trim() === "") {
-        throw new Error("[BACKUP] Resposta inválida ou não encontrada.");
+      if (!dados || !dados.resposta) {
+        throw new Error("[BACKUP] Resposta não encontrada no servidor de backup.");
       }
 
       const resposta = dados.resposta;
-      console.log("[RESPOSTA] Conteúdo a ser enviado:", resposta);
+      console.log("[RESPOSTA] Conteúdo:", resposta);
 
-      const envio = await fetch(apiRespostaURL, {
+      const enviar = await fetch(apiRespostaURL, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(resposta) // precisa ser JSON válido (aspas incluídas)
+        body: JSON.stringify(resposta)
       });
 
-      if (!envio.ok) {
-        throw new Error(`[API] Erro ao enviar para res.json. Status: ${envio.status}`);
+      if (!enviar.ok) {
+        throw new Error("[API] Falha ao enviar resposta para res.json");
       }
 
-      console.log("[API] Resposta enviada com sucesso.");
       document.getElementById("status").innerText = "Resposta enviada com sucesso! Abrindo WhatsApp...";
-
       setTimeout(() => {
-        const link = "https://wa.me/18002428478?text=" + encodeURIComponent(pergunta);
-        window.open(link, "_blank");
+        window.open("https://wa.me/18002428478?text=" + encodeURIComponent(pergunta), "_blank");
       }, 3000);
 
     } catch (err) {
-      console.error("[ERRO]", err);
       document.getElementById("status").innerText = "Erro: " + err.message;
+      console.error("[ERRO]", err);
     }
   }
 
