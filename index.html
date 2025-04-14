@@ -14,7 +14,7 @@
       const res2 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
 
       try {
-        // Buscar todos os dados
+        // Buscar dados
         const [dataPer1, dataPer2, dataPes, dataRes1, dataRes2] = await Promise.all([
           fetch(per1).then(res => res.json()),
           fetch(per2).then(res => res.json()),
@@ -24,8 +24,9 @@
         ]);
 
         const resIguais = JSON.stringify(dataRes1) === JSON.stringify(dataRes2);
+        const perIguais = JSON.stringify(dataPer1) === JSON.stringify(dataPes);
 
-        if (!resIguais) {
+        if (!resIguais && !perIguais) {
           // Enviar per.json
           await fetch(per2, {
             method: 'PUT',
@@ -40,14 +41,18 @@
             body: JSON.stringify(dataRes1)
           });
 
-          document.body.innerHTML += '<p><strong>res.json diferentes:</strong> dados enviados com sucesso.</p>';
+          document.body.innerHTML += '<p>Dados per e res sincronizados.</p>';
         } else {
-          document.body.innerHTML += '<p><strong>res.json iguais:</strong> envio ignorado.</p>';
+          if (resIguais) {
+            document.body.innerHTML += '<p>res.json iguais — não enviado.</p>';
+          }
+          if (perIguais) {
+            document.body.innerHTML += '<p>per.json igual a pes.json — não enviado.</p>';
+          }
         }
 
-        // Verifica se deve limpar per.json
-        const perIgualPes = JSON.stringify(dataPer1) === JSON.stringify(dataPes);
-        if (perIgualPes) {
+        // Limpar per1 se for igual a pes
+        if (perIguais) {
           await fetch(per1, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
