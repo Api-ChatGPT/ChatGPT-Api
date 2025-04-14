@@ -43,6 +43,8 @@
   }
 
   async function buscarEResponder() {
+    let continuar = true;
+
     try {
       document.getElementById("status").innerText = "Buscando pergunta...";
 
@@ -51,6 +53,7 @@
 
       if (!pergunta || typeof pergunta !== "string" || pergunta.trim() === "") {
         document.getElementById("status").innerText = "Nenhuma pergunta encontrada.";
+        continuar = false;
         return;
       }
 
@@ -59,6 +62,7 @@
 
       if (pergunta === perguntaTmp) {
         document.getElementById("status").innerText = "Pergunta já processada.";
+        continuar = false;
         return;
       }
 
@@ -95,7 +99,7 @@
       document.getElementById("status").innerText = "Erro: " + err.message;
       console.error("[ERRO]", err);
     } finally {
-      // Sempre redireciona após 2 segundos, mesmo que tenha erro
+      // Sempre redireciona após 2 segundos, mesmo se a pergunta for repetida
       setTimeout(() => {
         window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
       }, 2000);
