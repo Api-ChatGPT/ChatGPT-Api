@@ -27,7 +27,7 @@
           body: JSON.stringify(data2)
         });
 
-        // 3. Aguardar 5 segundos e limpar api2
+        // 3. Aguardar 10 segundos e limpar api2
         setTimeout(async () => {
           await fetch(api2, {
             method: 'PUT',
@@ -39,7 +39,7 @@
           // Redireciona após limpeza
           setTimeout(() => {
             window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/filtragem.html";
-          }, 1000);
+          }, 10000);
 
         }, 5000);
 
