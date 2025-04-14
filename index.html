@@ -27,15 +27,22 @@
           body: JSON.stringify(data2)
         });
 
-        // 3. Limpar api2 (deixar em branco) depois de 5 segundos...
-setTimeout(() => {
-        await fetch(api2, {
-          method: 'PUT',
-          body: JSON.stringify("") // ou null se quiser deletar
-        });
-}, 5000);
+        // 3. Aguardar 5 segundos e limpar api2
+        setTimeout(async () => {
+          await fetch(api2, {
+            method: 'PUT',
+            body: JSON.stringify("") // ou null
+          });
 
-        document.body.innerHTML += '<p>Dados sincronizados e limpos com sucesso.</p>';
+          document.body.innerHTML += '<p>Dados sincronizados e limpos com sucesso.</p>';
+
+          // Redireciona após limpeza
+          setTimeout(() => {
+            window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/filtragem.html";
+          }, 1000);
+
+        }, 5000);
+
       } catch (err) {
         console.error(err);
         document.body.innerHTML += '<p>Erro na sincronização.</p>';
@@ -43,12 +50,6 @@ setTimeout(() => {
     }
 
     syncData();
-
-// Redireciona após 1 segundo
-  setTimeout(() => {
-    window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/filtragem.html";
- }, 1000);
-
   </script>
 </body>
 </html>
