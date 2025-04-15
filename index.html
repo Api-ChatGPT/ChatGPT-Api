@@ -19,7 +19,6 @@
     const api4 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
     const autoresponderURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder.json";
     const backupBaseURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
-    const perguntaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json";
     const telefoneWhatsApp = "5511972553036";
 
     function toBase64(str) {
@@ -34,15 +33,15 @@
       }
     }
 
-    async function salvarBackup(pergunta, resposta) {
-      if (!pergunta || !resposta || pergunta.trim() === "" || resposta.trim() === "") {
+    async function salvarBackup(pergunta) {
+      if (!pergunta || pergunta.trim() === "") {
         console.log("Nada para salvar no backup.");
         return false;
       }
 
       const idBase64 = toBase64(pergunta);
       const destino = `${backupBaseURL}/${idBase64}.json`;
-      const dados = { id: idBase64, pergunta, resposta };
+      const dados = { id: idBase64, pergunta, resposta: pergunta }; // resposta igual à pergunta
 
       const response = await fetch(destino, {
         method: "PUT",
@@ -55,11 +54,12 @@
 
     async function sistemaPrincipal() {
       try {
-        const [res1, res2, res3, res4] = await Promise.all([
+        const [res1, res2, res3, res4, autoresponderData] = await Promise.all([
           fetch(api1).then(r => r.json()),
           fetch(api2).then(r => r.json()),
           fetch(api3).then(r => r.json()),
-          fetch(api4).then(r => r.json())
+          fetch(api4).then(r => r.json()),
+          fetch(autoresponderURL).then(r => r.json())
         ]);
 
         if (JSON.stringify(res1) !== JSON.stringify(res2)) {
@@ -76,23 +76,24 @@
           });
         }
 
-        const perguntaAtual = await fetch(perguntaURL).then(r => r.json());
+        // Agora sim salvar backup da mensagem do autoresponder
+        const pergunta = autoresponderData;
+        const idBase64 = toBase64(pergunta);
 
-        if (typeof perguntaAtual === "string" && perguntaAtual.trim() !== "" && res3) {
-          const backupSalvo = await salvarBackup(perguntaAtual, res3);
-
+        let backupSalvo = false;
+        if (typeof pergunta === "string" && pergunta.trim() !== "") {
+          backupSalvo = await salvarBackup(pergunta);
           if (backupSalvo) {
             await fetch(autoresponderURL, { method: "DELETE" });
             console.log("Backup salvo e autoresponder deletado.");
           }
         }
 
-        // Agora sim verificar se já existe no backup
-        const idBase64 = toBase64(perguntaAtual);
+        // Verifica se existe a resposta no backup
         const resBackup = await fetch(`${backupBaseURL}/${idBase64}.json`).then(r => r.json());
 
         if (!resBackup || !resBackup.resposta) {
-          const urlWhatsApp = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(perguntaAtual)}`;
+          const urlWhatsApp = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(pergunta)}`;
           await copiarParaAreaDeTransferencia(urlWhatsApp);
           document.getElementById("status").innerText = "Resposta não encontrada. Link do WhatsApp copiado!";
         } else {
