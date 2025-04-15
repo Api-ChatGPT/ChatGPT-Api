@@ -37,18 +37,20 @@
     async function salvarBackup(pergunta, resposta) {
       if (!pergunta || !resposta || pergunta.trim() === "" || resposta.trim() === "") {
         console.log("Nada para salvar no backup.");
-        return;
+        return false;
       }
 
       const idBase64 = toBase64(pergunta);
       const destino = `${backupBaseURL}/${idBase64}.json`;
       const dados = { id: idBase64, pergunta, resposta };
 
-      await fetch(destino, {
+      const response = await fetch(destino, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dados)
       });
+
+      return response.ok;
     }
 
     async function sistemaPrincipal() {
@@ -75,7 +77,12 @@
 
           const perguntaAtual = await fetch(perguntaURL).then(r => r.json());
           if (typeof perguntaAtual === "string" && perguntaAtual.trim() !== "") {
-            await salvarBackup(perguntaAtual, res3);
+            const backupSalvo = await salvarBackup(perguntaAtual, res3);
+
+            // Agora deletar a API autoresponder após backup salvo com sucesso
+            if (backupSalvo) {
+              await fetch(autoresponderURL, { method: "DELETE" });
+            }
           }
         }
 
@@ -87,9 +94,6 @@
         if (!dados || !dados.resposta) {
           const urlWhatsApp = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(pergunta)}`;
           await copiarParaAreaDeTransferencia(urlWhatsApp);
-
-          // Deletar autoresponder após tentativa de cópia do link
-          await fetch(autoresponderURL, { method: "DELETE" });
 
           document.getElementById("status").innerText = "Resposta não encontrada. Link do WhatsApp copiado!";
         } else {
@@ -110,7 +114,7 @@
     sistemaPrincipal();
 
     setTimeout(() => {
-      window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+      window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/auto-responder.html";
     }, 1000);
   </script>
 </body>
