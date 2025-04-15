@@ -83,9 +83,11 @@
           await copiarParaAreaDeTransferencia(urlWhatsApp);
           document.getElementById("status").innerText = "Resposta não encontrada. Link do WhatsApp copiado!";
 
-          // Deleta os dados do autoresponder APÓS salvar backup
-          await fetch(autoresponderURL, { method: "DELETE" });
         } else {
+
+         // Deleta os dados do autoresponder APÓS salvar backup
+          await fetch(autoresponderURL, { method: "DELETE" });
+
           await fetch(api3, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
