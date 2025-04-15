@@ -79,12 +79,12 @@
         const dados = await resBackup.json();
 
         if (!dados || !dados.resposta) {
-          await fetch(autoresponderURL, { method: "DELETE" });
-
           const urlWhatsApp = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(pergunta)}`;
           await copiarParaAreaDeTransferencia(urlWhatsApp);
-
           document.getElementById("status").innerText = "Resposta não encontrada. Link do WhatsApp copiado!";
+
+          // Deleta os dados do autoresponder APÓS salvar backup
+          await fetch(autoresponderURL, { method: "DELETE" });
         } else {
           await fetch(api3, {
             method: "PUT",
