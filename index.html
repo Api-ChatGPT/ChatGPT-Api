@@ -20,6 +20,7 @@
     const autoresponderURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder.json";
     const backupBaseURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
     const perguntaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json";
+    const numeroWhatsApp = "5511972553036";
 
     function toBase64(str) {
       return btoa(unescape(encodeURIComponent(str)));
@@ -35,6 +36,15 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dados)
       });
+    }
+
+    async function copiarParaAreaDeTransferencia(texto) {
+      try {
+        await navigator.clipboard.writeText(texto);
+        document.getElementById("status").innerText = "Link do WhatsApp copiado para a área de transferência!";
+      } catch (err) {
+        document.getElementById("status").innerText = "Erro ao copiar link: " + err.message;
+      }
     }
 
     async function sistemaPrincipal() {
@@ -54,21 +64,33 @@
           });
         }
 
-        // Sistema 2: res de api3 ≠ res de api4 => envia para api4
+        // Sistema 2: res de api3 ≠ res de api4 => envia para api4 e salva backup
         if (JSON.stringify(res3) !== JSON.stringify(res4)) {
           await fetch(api4, {
             method: "PUT",
             body: JSON.stringify(res3)
           });
 
-          // Faz backup também se foi enviada resposta nova
           const perguntaAtual = await fetch(perguntaURL).then(r => r.json());
           if (typeof perguntaAtual === "string" && perguntaAtual.trim() !== "") {
             await salvarBackup(perguntaAtual, res3);
           }
         }
 
-        document.getElementById("status").innerText = "Sincronização e backup concluídos.";
+        // Verificação extra: se não existe resposta no backup
+        const perguntaAtual = await fetch(perguntaURL).then(r => r.json());
+        const idBase64 = toBase64(perguntaAtual);
+        const backupURL = `${backupBaseURL}/${idBase64}.json`;
+
+        const resBackup = await fetch(backupURL);
+        const dados = await resBackup.json();
+
+        if (!dados || !dados.resposta) {
+          const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(perguntaAtual)}`;
+          await copiarParaAreaDeTransferencia(urlWhatsApp);
+        }
+
+        document.getElementById("status").innerText = "Sincronização e verificação concluídas.";
       } catch (err) {
         document.getElementById("status").innerText = "Erro na sincronização.";
         console.error(err);
