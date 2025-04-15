@@ -19,7 +19,7 @@
     const api4 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
     const autoresponderURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder.json";
     const backupBaseURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
-    const perguntaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json";
+    const perguntaURL = api2;
     const numeroWhatsApp = "5511972553036";
 
     function toBase64(str) {
@@ -41,33 +41,35 @@
     async function copiarParaAreaDeTransferencia(texto) {
       try {
         await navigator.clipboard.writeText(texto);
-        document.getElementById("status").innerText = "Link do WhatsApp copiado para a área de transferência!";
+        document.getElementById("status").innerText = "Link do WhatsApp copiado!";
       } catch (err) {
-        document.getElementById("status").innerText = "Erro ao copiar link: " + err.message;
+        console.error("Erro ao copiar link:", err);
       }
     }
 
     async function sistemaPrincipal() {
       try {
-        const [res1, res2, res3, res4] = await Promise.all([
+        const [per1, per2, res3, res4] = await Promise.all([
           fetch(api1).then(r => r.json()),
           fetch(api2).then(r => r.json()),
           fetch(api3).then(r => r.json()),
           fetch(api4).then(r => r.json())
         ]);
 
-        // Sistema 1: per de api1 ≠ per de api2 => envia para api2
-        if (JSON.stringify(res1) !== JSON.stringify(res2)) {
+        // Verifica se a pergunta foi modificada
+        if (JSON.stringify(per1) !== JSON.stringify(per2)) {
           await fetch(api2, {
             method: "PUT",
-            body: JSON.stringify(res1)
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(per1)
           });
         }
 
-        // Sistema 2: res de api3 ≠ res de api4 => envia para api4 e salva backup
+        // Verifica se a resposta foi modificada
         if (JSON.stringify(res3) !== JSON.stringify(res4)) {
           await fetch(api4, {
             method: "PUT",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(res3)
           });
 
@@ -77,23 +79,22 @@
           }
         }
 
-        // Verificação extra: se não existe resposta no backup
+        // Se não existe resposta no backup
         const perguntaAtual = await fetch(perguntaURL).then(r => r.json());
         const idBase64 = toBase64(perguntaAtual);
         const backupURL = `${backupBaseURL}/${idBase64}.json`;
 
-        const resBackup = await fetch(backupURL);
-        const dados = await resBackup.json();
+        const resBackup = await fetch(backupURL).then(r => r.json());
 
-        if (!dados || !dados.resposta) {
-          const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(perguntaAtual)}`;
-          await copiarParaAreaDeTransferencia(urlWhatsApp);
+        if (!resBackup || !resBackup.resposta) {
+          const linkWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(perguntaAtual)}`;
+          await copiarParaAreaDeTransferencia(linkWhatsApp);
         }
 
-        document.getElementById("status").innerText = "Sincronização e verificação concluídas.";
+        document.getElementById("status").innerText = "Sincronização concluída com verificação.";
       } catch (err) {
         document.getElementById("status").innerText = "Erro na sincronização.";
-        console.error(err);
+        console.error("Erro:", err);
       }
     }
 
@@ -113,7 +114,7 @@
 
         await salvarBackup(perguntaAtual, mensagem);
       } catch (err) {
-        console.error("Erro no sistema de autoresponder:", err);
+        console.error("Erro no autoresponder:", err);
       }
     }
 
@@ -121,7 +122,7 @@
     sistemaAutoresponder();
 
     setTimeout(() => {
-      window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+      window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/auto-responder.html";
     }, 1000);
   </script>
 </body>
