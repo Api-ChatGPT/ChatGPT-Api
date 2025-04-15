@@ -35,9 +35,15 @@
     }
 
     async function salvarBackup(pergunta, resposta) {
+      if (!pergunta || !resposta || pergunta.trim() === "" || resposta.trim() === "") {
+        console.log("Nada para salvar no backup.");
+        return;
+      }
+
       const idBase64 = toBase64(pergunta);
       const destino = `${backupBaseURL}/${idBase64}.json`;
       const dados = { id: idBase64, pergunta, resposta };
+
       await fetch(destino, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -82,10 +88,7 @@
           const urlWhatsApp = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(pergunta)}`;
           await copiarParaAreaDeTransferencia(urlWhatsApp);
 
-          // Salva a pergunta no backup com resposta vazia (garante que o backup existe)
-          await salvarBackup(pergunta, "");
-
-          // Só depois de salvar, apaga o autoresponder
+          // Deletar autoresponder após tentativa de cópia do link
           await fetch(autoresponderURL, { method: "DELETE" });
 
           document.getElementById("status").innerText = "Resposta não encontrada. Link do WhatsApp copiado!";
