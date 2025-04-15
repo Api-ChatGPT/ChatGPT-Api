@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Slide Educativo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .slider-container {
+      width: 80%;
+      max-width: 600px;
+      background: white;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    .slide {
+      display: none;
+      padding: 20px;
+      text-align: center;
+    }
+    .slide.active {
+      display: block;
+    }
+    .slide img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #eee;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background: #007BFF;
+      color: white;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+<div class="slider-container">
+  <div class="slide active">
+    <img src="https://via.placeholder.com/500x200?text=Slide+1" alt="Slide 1">
+    <h2>O uso indevido do celular</h2>
+    <p>O uso abusivo do celular pode gerar transtornos psíquicos, como ansiedade e, posteriormente, depressão.</p>
+  </div>
+  <div class="slide">
+    <img src="https://via.placeholder.com/
