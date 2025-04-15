@@ -90,6 +90,11 @@
         if (!perguntaAtual || perguntaAtual.trim() === "") return;
 
         await salvarBackup(perguntaAtual, mensagem);
+
+        // Exclui o nó do autoresponder após o backup
+        await fetch(`https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder/${ultimoID}.json`, {
+          method: "DELETE"
+        });
       } catch (err) {
         console.error("Erro no sistema de autoresponder:", err);
       }
