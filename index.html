@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Sistema Sincronizado com Backup</title>
+  <title>Sistema Sincronizado com Backup e Redirecionamento</title>
   <style>
     body { font-family: Arial, sans-serif; }
     #status { font-weight: bold; color: #333; margin-bottom: 10px; }
@@ -19,8 +19,8 @@
     const api4 = 'https://chatgpt-api-9a719-default-rtdb.firebaseio.com/api/chat/res.json';
     const autoresponderURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder.json";
     const backupBaseURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/backup";
-    const perguntaURL = api2;
-    const numeroWhatsApp = "5511972553036";
+    const perguntaURL = "https://server-chatgpt-api-default-rtdb.firebaseio.com/api/chat/per.json";
+    const telefoneWhatsApp = "5511972553036";
 
     function toBase64(str) {
       return btoa(unescape(encodeURIComponent(str)));
@@ -41,7 +41,7 @@
     async function copiarParaAreaDeTransferencia(texto) {
       try {
         await navigator.clipboard.writeText(texto);
-        document.getElementById("status").innerText = "Link do WhatsApp copiado!";
+        console.log("Link copiado:", texto);
       } catch (err) {
         console.error("Erro ao copiar link:", err);
       }
@@ -49,27 +49,25 @@
 
     async function sistemaPrincipal() {
       try {
-        const [per1, per2, res3, res4] = await Promise.all([
+        const [res1, res2, res3, res4] = await Promise.all([
           fetch(api1).then(r => r.json()),
           fetch(api2).then(r => r.json()),
           fetch(api3).then(r => r.json()),
           fetch(api4).then(r => r.json())
         ]);
 
-        // Verifica se a pergunta foi modificada
-        if (JSON.stringify(per1) !== JSON.stringify(per2)) {
+        // Sistema 1: Sincroniza pergunta
+        if (JSON.stringify(res1) !== JSON.stringify(res2)) {
           await fetch(api2, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(per1)
+            body: JSON.stringify(res1)
           });
         }
 
-        // Verifica se a resposta foi modificada
+        // Sistema 2: Sincroniza resposta
         if (JSON.stringify(res3) !== JSON.stringify(res4)) {
           await fetch(api4, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(res3)
           });
 
@@ -79,22 +77,29 @@
           }
         }
 
-        // Se não existe resposta no backup
-        const perguntaAtual = await fetch(perguntaURL).then(r => r.json());
-        const idBase64 = toBase64(perguntaAtual);
-        const backupURL = `${backupBaseURL}/${idBase64}.json`;
+        // Verifica e envia resposta do backup se existir
+        const pergunta = await fetch(perguntaURL).then(r => r.json());
+        const idBase64 = toBase64(pergunta);
+        const urlBackup = `${backupBaseURL}/${idBase64}.json`;
 
-        const resBackup = await fetch(backupURL).then(r => r.json());
+        const resBackup = await fetch(urlBackup);
+        const dadosBackup = await resBackup.json();
 
-        if (!resBackup || !resBackup.resposta) {
-          const linkWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(perguntaAtual)}`;
-          await copiarParaAreaDeTransferencia(linkWhatsApp);
+        if (dadosBackup && dadosBackup.resposta) {
+          await fetch(api3, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dadosBackup.resposta)
+          });
+          document.getElementById("status").innerText = "Resposta do backup enviada.";
+        } else {
+          const urlWhatsApp = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(pergunta)}`;
+          await copiarParaAreaDeTransferencia(urlWhatsApp);
+          document.getElementById("status").innerText = "Resposta não encontrada. Link do WhatsApp copiado!";
         }
-
-        document.getElementById("status").innerText = "Sincronização concluída com verificação.";
       } catch (err) {
-        document.getElementById("status").innerText = "Erro na sincronização.";
-        console.error("Erro:", err);
+        document.getElementById("status").innerText = "Erro: " + err.message;
+        console.error(err);
       }
     }
 
@@ -114,7 +119,7 @@
 
         await salvarBackup(perguntaAtual, mensagem);
       } catch (err) {
-        console.error("Erro no autoresponder:", err);
+        console.error("Erro no sistema de autoresponder:", err);
       }
     }
 
@@ -122,7 +127,7 @@
     sistemaAutoresponder();
 
     setTimeout(() => {
-      window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
+      window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/auto-responder.html";
     }, 1000);
   </script>
 </body>
