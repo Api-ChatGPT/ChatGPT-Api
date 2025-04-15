@@ -37,6 +37,44 @@
       });
     }
 
+    async function verificarPergunta(pergunta) {
+      const idBase64 = toBase64(pergunta);
+      const urlPesquisa = `${backupBaseURL}/${idBase64}.json`;
+
+      try {
+        const resposta = await fetch(urlPesquisa);
+        const dados = await resposta.json();
+        return dados;  // Retorna os dados encontrados ou 'undefined' se não encontrado
+      } catch (err) {
+        console.error("Erro ao verificar pergunta:", err);
+        return null; // Se não encontrar ou ocorrer erro
+      }
+    }
+
+    async function enviarResposta(pergunta, resposta) {
+      const perguntaAtual = await verificarPergunta(pergunta);
+      if (perguntaAtual) {
+        // Se encontrar a pergunta no servidor, envia a resposta para a API de chat
+        const idBase64 = toBase64(pergunta);
+        const destinoResposta = `${api3}`; // Endereço da API de respostas
+
+        const dadosResposta = {
+          pergunta: pergunta,
+          resposta: resposta,
+          id: idBase64,
+        };
+
+        await fetch(destinoResposta, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dadosResposta),
+        });
+        console.log("Resposta enviada para a API.");
+      } else {
+        console.log("Pergunta não encontrada no servidor.");
+      }
+    }
+
     async function sistemaPrincipal() {
       try {
         const [res1, res2, res3, res4] = await Promise.all([
@@ -65,6 +103,7 @@
           const perguntaAtual = await fetch(perguntaURL).then(r => r.json());
           if (typeof perguntaAtual === "string" && perguntaAtual.trim() !== "") {
             await salvarBackup(perguntaAtual, res3);
+            await enviarResposta(perguntaAtual, res3);  // Envia a resposta para a API
           }
         }
 
@@ -95,6 +134,9 @@
         await fetch(`https://server-chatgpt-api-default-rtdb.firebaseio.com/autoresponder/${ultimoID}.json`, {
           method: "DELETE"
         });
+
+        // Envia a resposta do autoresponder
+        await enviarResposta(perguntaAtual, mensagem);
       } catch (err) {
         console.error("Erro no sistema de autoresponder:", err);
       }
