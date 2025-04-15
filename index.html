@@ -81,13 +81,15 @@
         if (!dados || !dados.resposta) {
           const urlWhatsApp = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(pergunta)}`;
           await copiarParaAreaDeTransferencia(urlWhatsApp);
-          document.getElementById("status").innerText = "Resposta não encontrada. Link do WhatsApp copiado!";
 
-        } else {
+          // Salva a pergunta no backup com resposta vazia (garante que o backup existe)
+          await salvarBackup(pergunta, "");
 
-         // Deleta os dados do autoresponder APÓS salvar backup
+          // Só depois de salvar, apaga o autoresponder
           await fetch(autoresponderURL, { method: "DELETE" });
 
+          document.getElementById("status").innerText = "Resposta não encontrada. Link do WhatsApp copiado!";
+        } else {
           await fetch(api3, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
