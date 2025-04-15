@@ -74,37 +74,37 @@
             method: "PUT",
             body: JSON.stringify(res3)
           });
+        }
 
-          const perguntaAtual = await fetch(perguntaURL).then(r => r.json());
-          if (typeof perguntaAtual === "string" && perguntaAtual.trim() !== "") {
-            const backupSalvo = await salvarBackup(perguntaAtual, res3);
+        const perguntaAtual = await fetch(perguntaURL).then(r => r.json());
 
-            // Agora deletar a API autoresponder após backup salvo com sucesso
-            if (backupSalvo) {
-              await fetch(autoresponderURL, { method: "DELETE" });
-            }
+        if (typeof perguntaAtual === "string" && perguntaAtual.trim() !== "" && res3) {
+          const backupSalvo = await salvarBackup(perguntaAtual, res3);
+
+          if (backupSalvo) {
+            await fetch(autoresponderURL, { method: "DELETE" });
+            console.log("Backup salvo e autoresponder deletado.");
           }
         }
 
-        const pergunta = await fetch(perguntaURL).then(r => r.json());
-        const idBase64 = toBase64(pergunta);
-        const resBackup = await fetch(`${backupBaseURL}/${idBase64}.json`);
-        const dados = await resBackup.json();
+        // Agora sim verificar se já existe no backup
+        const idBase64 = toBase64(perguntaAtual);
+        const resBackup = await fetch(`${backupBaseURL}/${idBase64}.json`).then(r => r.json());
 
-        if (!dados || !dados.resposta) {
-          const urlWhatsApp = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(pergunta)}`;
+        if (!resBackup || !resBackup.resposta) {
+          const urlWhatsApp = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(perguntaAtual)}`;
           await copiarParaAreaDeTransferencia(urlWhatsApp);
-
           document.getElementById("status").innerText = "Resposta não encontrada. Link do WhatsApp copiado!";
         } else {
           await fetch(api3, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(dados.resposta)
+            body: JSON.stringify(resBackup.resposta)
           });
 
           document.getElementById("status").innerText = "Sincronização e backup concluídos.";
         }
+
       } catch (err) {
         document.getElementById("status").innerText = "Erro na sincronização.";
         console.error(err);
@@ -115,7 +115,7 @@
 
     setTimeout(() => {
       window.location.href = "https://api-chatgpt.github.io/ChatGPT-Api/index.html";
-    }, 5000);
+    }, 1500);
   </script>
 </body>
 </html>
